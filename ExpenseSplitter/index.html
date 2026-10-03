@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip Split</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #e9f0ee;
+  --panel: #ffffff;
+  --ink: #12263a;
+  --muted: #566878;
+  --line: #c9d6d2;
+  --accent: #0e7c66;
+  --accent-ink: #ffffff;
+  --owe: #a8460f;
+  --danger: #b3261e;
+  --radius: 10px;
+  --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1a22;
+    --panel: #17252f;
+    --ink: #e6eef0;
+    --muted: #9db0ba;
+    --line: #2b3c47;
+    --accent: #4cc3a6;
+    --accent-ink: #08201a;
+    --owe: #f0a06a;
+    --danger: #ff8a80;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.45;
+}
+main { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; }
+h1, h2 { margin: 0; font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 1.25rem; margin-bottom: 12px; }
+section { margin-top: 28px; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.trip-name {
+  width: 100%;
+  border: 0;
+  border-bottom: 2px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font: 800 2rem/1.15 var(--font);
+  letter-spacing: -0.02em;
+  padding: 4px 0 8px;
+  border-radius: 0;
+}
+.trip-name:focus { outline: none; border-bottom-color: var(--accent); }
+.total { color: var(--muted); margin: 8px 0 0; }
+
+label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+input[type=text], input[type=number], select {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+input:focus-visible, select:focus-visible, button:focus-visible, .check:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; min-width: 0; }
+.field { margin-bottom: 14px; }
+button {
+  font: 600 0.95rem var(--font);
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.danger { color: var(--danger); }
+button.small { min-height: 36px; padding: 0 12px; font-size: 0.85rem; }
+button:hover { filter: brightness(0.96); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: 999px; padding: 4px 6px 4px 14px;
+}
+.chip button {
+  min-height: 28px; width: 28px; padding: 0; border-radius: 50%;
+  border: 0; background: transparent; color: var(--muted); font-size: 1.1rem; line-height: 1;
+}
+.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.check {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 12px; min-height: 44px; font-weight: 500; font-size: 1rem; margin: 0; cursor: pointer;
+}
+.check input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.link-btn {
+  background: none; border: 0; padding: 0; min-height: 0; color: var(--accent);
+  text-decoration: underline; font-size: 0.85rem; font-weight: 600;
+}
+.label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.label-row label { margin: 0; }
+.error { color: var(--danger); font-weight: 600; min-height: 1.4em; margin: 8px 0 0; }
+.actions { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+
+.expense { padding: 14px 0; border-top: 1px solid var(--line); }
+.expense:first-child { border-top: 0; padding-top: 0; }
+.expense:last-child { padding-bottom: 0; }
+.expense-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.expense-desc { font-weight: 600; overflow-wrap: anywhere; }
+.amount { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.meta { color: var(--muted); font-size: 0.9rem; margin-top: 2px; overflow-wrap: anywhere; }
+.expense .actions { margin-top: 8px; }
+
+.settle { list-style: none; margin: 0; padding: 0; }
+.settle li {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 14px 0; border-top: 2px dashed var(--line);
+}
+.settle li:first-child { border-top: 0; padding-top: 0; }
+.settle li:last-child { padding-bottom: 0; }
+.settle .who { font-size: 1.05rem; overflow-wrap: anywhere; }
+.settle .who b { font-weight: 800; }
+.settle .amt { font-size: 1.5rem; font-weight: 800; color: var(--owe); font-variant-numeric: tabular-nums; }
+.settled { font-weight: 600; color: var(--accent); margin: 0; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 8px 6px; border-top: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; overflow-wrap: anywhere; }
+thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+.pos { color: var(--accent); font-weight: 700; }
+.neg { color: var(--owe); font-weight: 700; }
+
+.empty { color: var(--muted); margin: 0; }
+.banner {
+  background: var(--panel); border: 2px solid var(--accent); border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 20px;
+}
+.banner p { margin: 0 0 10px; }
+.toast {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px;
+  font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.2s; max-width: calc(100% - 32px);
+}
+.toast.show { opacity: 1; }
+.hidden { display: none !important; }
+.tools { display: flex; gap: 10px; flex-wrap: wrap; }
+.note { color: var(--muted); font-size: 0.9rem; margin: 10px 0 0; }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+@media (max-width: 480px) { .row.stack-sm { flex-direction: column; } }
+</style>
+</head>
+<body>
+<main>
+  <div id="banner" class="banner hidden" role="region" aria-label="Shared trip">
+    <p>This link contains a shared trip. Loading it replaces the trip saved in this browser.</p>
+    <div class="actions">
+      <button class="primary" id="banner-load">Load shared trip</button>
+      <button id="banner-keep">Keep my trip</button>
+    </div>
+  </div>
+
+  <header>
+    <label for="trip-name" class="hidden">Trip name</label>
+    <input id="trip-name" class="trip-name" type="text" placeholder="Name this trip" maxlength="80" autocomplete="off">
+    <p class="total" id="total"></p>
+  </header>
+
+  <section aria-labelledby="h-settle">
+    <h2 id="h-settle">Settle up</h2>
+    <div class="panel" id="settle"></div>
+  </section>
+
+  <section aria-labelledby="h-people">
+    <h2 id="h-people">People</h2>
+    <div class="panel">
+      <form id="person-form" class="row" autocomplete="off">
+        <div style="flex: 3">
+          <label for="person-name" class="hidden">Name</label>
+          <input id="person-name" type="text" placeholder="Add a person" maxlength="40">
+        </div>
+        <button class="primary" type="submit" style="flex: 1">Add</button>
+      </form>
+      <p class="error" id="person-error" role="alert"></p>
+      <div class="chips" id="people"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-expense">
+    <h2 id="h-expense">Add an expense</h2>
+    <form class="panel" id="expense-form" autocomplete="off" novalidate>
+      <div class="row stack-sm">
+        <div class="field" style="flex: 2">
+          <label for="e-desc">What was it for?</label>
+          <input id="e-desc" type="text" placeholder="Car rental" maxlength="80">
+        </div>
+        <div class="field">
+          <label for="e-amount">Amount</label>
+          <input id="e-amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
+        </div>
+      </div>
+      <div class="field">
+        <label for="e-paid">Paid by</label>
+        <select id="e-paid"></select>
+      </div>
+      <div class="field">
+        <div class="label-row">
+          <label id="split-label">Split between</label>
+          <span>
+            <button type="button" class="link-btn" id="sel-all">Everyone</button>
+            <button type="button" class="link-btn" id="sel-none">None</button>
+          </span>
+        </div>
+        <div class="checks" id="e-parts" role="group" aria-labelledby="split-label"></div>
+      </div>
+      <p class="error" id="e-error" role="alert"></p>
+      <div class="actions">
+        <button class="primary" type="submit" id="e-submit">Add expense</button>
+        <button type="button" id="e-cancel" class="hidden">Cancel edit</button>
+      </div>
+    </form>
+  </section>
+
+  <section aria-labelledby="h-list">
+    <h2 id="h-list">Expenses</h2>
+    <div class="panel" id="expenses"></div>
+  </section>
+
+  <section aria-labelledby="h-bal">
+    <h2 id="h-bal">Who paid and who owes</h2>
+    <div class="panel table-wrap" id="balances"></div>
+  </section>
+
+  <section aria-labelledby="h-data">
+    <h2 id="h-data">Save and share</h2>
+    <div class="panel">
+      <div class="tools">
+        <button id="copy-link">Copy share link</button>
+        <button id="export">Download backup</button>
+        <button id="import-btn">Load backup</button>
+        <button id="reset" class="danger">Start a new trip</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" class="hidden">
+      <p class="note">Your trip is saved automatically in this browser. The share link holds the whole trip in the link itself, so anyone with the link can see it. Sharing does not sync: to pass on changes, send a new link or backup.</p>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "tripsplit.v1";
+  var HASH_PREFIX = "#t=";
+
+  var state = loadLocal() || blank();
+  var draftParts = new Set(state.people.map(function (p) { return p.id; }));
+  var editingId = null;
+  var pendingShared = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function blank() { return { name: "", people: [], expenses: [] }; }
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  var money = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" });
+  function fmt(cents) { return money.format(cents / 100); }
+  function personName(id) {
+    var p = state.people.find(function (x) { return x.id === id; });
+    return p ? p.name : "Unknown";
+  }
+
+  /* ---------- storage ---------- */
+
+  function normalize(raw) {
+    if (!raw || typeof raw !== "object" || !Array.isArray(raw.people) || !Array.isArray(raw.expenses)) return null;
+    var people = [];
+    raw.people.forEach(function (p) {
+      if (p && typeof p.id === "string" && typeof p.name === "string" && p.name.trim()) {
+        people.push({ id: p.id, name: p.name.trim().slice(0, 40) });
+      }
+    });
+    var ids = new Set(people.map(function (p) { return p.id; }));
+    var expenses = [];
+    raw.expenses.forEach(function (e) {
+      if (!e || typeof e.id !== "string" || !ids.has(e.paidBy)) return;
+      var amount = Math.round(Number(e.amount));
+      if (!isFinite(amount) || amount < 0) return;
+      var parts = Array.isArray(e.participants) ? e.participants.filter(function (id) { return ids.has(id); }) : [];
+      if (!parts.length) return;
+      expenses.push({
+        id: e.id,
+        desc: String(e.desc || "Expense").slice(0, 80),
+        amount: amount,
+        paidBy: e.paidBy,
+        participants: parts
+      });
+    });
+    return { name: String(raw.name || "").slice(0, 80), people: people, expenses: expenses };
+  }
+
+  function loadLocal() {
+    try {
+      var s = localStorage.getItem(STORAGE_KEY);
+      return s ? normalize(JSON.parse(s)) : null;
+    } catch (e) { return null; }
+  }
+  function saveLocal() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch (e) { toast("Could not save in this browser. Download a backup to be safe."); }
+  }
+  function isEmpty(s) { return !s.name && !s.people.length && !s.expenses.length; }
+
+  /* ---------- share link ---------- */
+
+  function encodeState(s) {
+    var bytes = new TextEncoder().encode(JSON.stringify(s));
+    var bin = "";
+    bytes.forEach(function (b) { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function decodeState(str) {
+    var b64 = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return normalize(JSON.parse(new TextDecoder().decode(bytes)));
+  }
+  function checkHash() {
+    if (location.hash.indexOf(HASH_PREFIX) !== 0) return;
+    var shared = null;
+    try { shared = decodeState(location.hash.slice(HASH_PREFIX.length)); } catch (e) { shared = null; }
+    history.replaceState(null, "", location.pathname + location.search);
+    if (!shared) { toast("That share link could not be read."); return; }
+    if (isEmpty(state)) { adopt(shared); toast("Shared trip loaded."); return; }
+    pendingShared = shared;
+    $("banner").classList.remove("hidden");
+  }
+
+  function adopt(s) {
+    state = s;
+    draftParts = new Set(state.people.map(function (p) { return p.id; }));
+    editingId = null;
+    clearForm();
+    saveLocal();
+    render();
+  }
+
+  /* ---------- math (integer cents) ---------- */
+
+  function compute() {
+    var paid = {}, owed = {};
+    state.people.forEach(function (p) { paid[p.id] = 0; owed[p.id] = 0; });
+    state.expenses.forEach(function (e) {
+      var ids = state.people.filter(function (p) { return e.participants.indexOf(p.id) !== -1; })
+                            .map(function (p) { return p.id; });
+      if (!ids.length) return;
+      var base = Math.floor(e.amount / ids.length);
+      var rem = e.amount - base * ids.length;
+      paid[e.paidBy] += e.amount;
+      ids.forEach(function (id) {
+        owed[id] += base + (rem > 0 ? 1 : 0);
+        if (rem > 0) rem--;
+      });
+    });
+    var net = {};
+    state.people.forEach(function (p) { net[p.id] = paid[p.id] - owed[p.id]; });
+    return { paid: paid, owed: owed, net: net };
+  }
+
+  function settle(net) {
+    var debtors = [], creditors = [], out = [];
+    state.people.forEach(function (p) {
+      var v = net[p.id];
+      if (v < 0) debtors.push({ id: p.id, v: -v });
+      else if (v > 0) creditors.push({ id: p.id, v: v });
+    });
+    while (debtors.length && creditors.length) {
+      debtors.sort(function (a, b) { return b.v - a.v; });
+      creditors.sort(function (a, b) { return b.v - a.v; });
+      var d = debtors[0], c = creditors[0];
+      var amt = Math.min(d.v, c.v);
+      out.push({ from: d.id, to: c.id, amt: amt });
+      d.v -= amt; c.v -= amt;
+      if (d.v === 0) debtors.shift();
+      if (c.v === 0) creditors.shift();
+    }
+    return out;
+  }
+
+  /* ---------- rendering ---------- */
+
+  function render() {
+    $("trip-name").value = state.name;
+    renderPeople();
+    renderForm();
+    renderExpenses();
+    renderResults();
+  }
+
+  function renderPeople() {
+    var el = $("people");
+    if (!state.people.length) { el.innerHTML = '<p class="empty">Add everyone on the trip to get started.</p>'; return; }
+    el.innerHTML = state.people.map(function (p) {
+      return '<span class="chip">' + esc(p.name) +
+        '<button type="button" data-remove-person="' + esc(p.id) + '" aria-label="Remove ' + esc(p.name) + '">&times;</button></span>';
+    }).join("");
+  }
+
+  function renderForm() {
+    var sel = $("e-paid");
+    var current = sel.value;
+    sel.innerHTML = state.people.map(function (p) {
+      return '<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>';
+    }).join("");
+    if (state.people.some(function (p) { return p.id === current; })) sel.value = current;
+
+    $("e-parts").innerHTML = state.people.map(function (p) {
+      return '<label class="check"><input type="checkbox" data-part="' + esc(p.id) + '"' +
+        (draftParts.has(p.id) ? " checked" : "") + '> ' + esc(p.name) + '</label>';
+    }).join("") || '<p class="empty">Add people first.</p>';
+
+    $("e-submit").textContent = editingId ? "Save changes" : "Add expense";
+    $("e-cancel").classList.toggle("hidden", !editingId);
+  }
+
+  function renderExpenses() {
+    var el = $("expenses");
+    if (!state.expenses.length) { el.innerHTML = '<p class="empty">No expenses yet.</p>'; return; }
+    el.innerHTML = state.expenses.map(function (e) {
+      var names = state.people.filter(function (p) { return e.participants.indexOf(p.id) !== -1; })
+                              .map(function (p) { return p.name; });
+      var split = names.length === state.people.length ? "everyone" : names.join(", ");
+      return '<div class="expense">' +
+        '<div class="expense-top"><span class="expense-desc">' + esc(e.desc) + '</span>' +
+        '<span class="amount">' + fmt(e.amount) + '</span></div>' +
+        '<div class="meta">Paid by ' + esc(personName(e.paidBy)) + '. Split between ' + esc(split) + '.</div>' +
+        '<div class="actions">' +
+        '<button class="small" data-edit="' + esc(e.id) + '">Edit</button>' +
+        '<button class="small danger" data-delete="' + esc(e.id) + '">Delete</button></div></div>';
+    }).join("");
+  }
+
+  function renderResults() {
+    var total = state.expenses.reduce(function (s, e) { return s + e.amount; }, 0);
+    $("total").textContent = state.expenses.length
+      ? state.expenses.length + (state.expenses.length === 1 ? " expense, " : " expenses, ") + fmt(total) + " in total"
+      : "";
+
+    var r = compute();
+    var transfers = settle(r.net);
+    var settleEl = $("settle");
+    if (!state.expenses.length) {
+      settleEl.innerHTML = '<p class="empty">Add an expense and the payments needed to even things out will show here.</p>';
+    } else if (!transfers.length) {
+      settleEl.innerHTML = '<p class="settled">Everyone is even.</p>';
+    } else {
+      settleEl.innerHTML = '<ul class="settle">' + transfers.map(function (t) {
+        return '<li><span class="who"><b>' + esc(personName(t.from)) + '</b> pays <b>' + esc(personName(t.to)) + '</b></span>' +
+          '<span class="amt">' + fmt(t.amt) + '</span></li>';
+      }).join("") + '</ul>';
+    }
+
+    var balEl = $("balances");
+    if (!state.people.length) { balEl.innerHTML = '<p class="empty">No one added yet.</p>'; return; }
+    balEl.innerHTML = '<table><thead><tr><th>Person</th><th>Paid</th><th>Share</th><th>Balance</th></tr></thead><tbody>' +
+      state.people.map(function (p) {
+        var n = r.net[p.id];
+        var cls = n > 0 ? "pos" : n < 0 ? "neg" : "";
+        var label = n > 0 ? "+" + fmt(n) : fmt(n);
+        return '<tr><td>' + esc(p.name) + '</td><td>' + fmt(r.paid[p.id]) + '</td><td>' + fmt(r.owed[p.id]) +
+          '</td><td class="' + cls + '">' + label + '</td></tr>';
+      }).join("") + '</tbody></table>' +
+      '<p class="note">A positive balance means the group owes that person. A negative balance means they owe the group.</p>';
+  }
+
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.classList.remove("show"); }, 3000);
+  }
+
+  function clearForm() {
+    $("e-desc").value = "";
+    $("e-amount").value = "";
+    $("e-error").textContent = "";
+    editingId = null;
+    draftParts = new Set(state.people.map(function (p) { return p.id; }));
+  }
+
+  /* ---------- events ---------- */
+
+  $("trip-name").addEventListener("input", function (e) {
+    state.name = e.target.value;
+    saveLocal();
+  });
+
+  $("person-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var input = $("person-name");
+    var name = input.value.trim();
+    var err = $("person-error");
+    err.textContent = "";
+    if (!name) { err.textContent = "Enter a name."; return; }
+    if (state.people.some(function (p) { return p.name.toLowerCase() === name.toLowerCase(); })) {
+      err.textContent = name + " is already on the list."; return;
+    }
+    var p = { id: uid(), name: name };
+    state.people.push(p);
+    draftParts.add(p.id);
+    input.value = "";
+    saveLocal();
+    render();
+    input.focus();
+  });
+
+  $("people").addEventListener("click", function (ev) {
+    var btn = ev.target.closest("[data-remove-person]");
+    if (!btn) return;
+    var id = btn.getAttribute("data-remove-person");
+    var used = state.expenses.some(function (e) { return e.paidBy === id || e.participants.indexOf(id) !== -1; });
+    var err = $("person-error");
+    if (used) {
+      err.textContent = personName(id) + " is part of existing expenses. Edit or delete those first.";
+      return;
+    }
+    err.textContent = "";
+    state.people = state.people.filter(function (p) { return p.id !== id; });
+    draftParts.delete(id);
+    saveLocal();
+    render();
+  });
+
+  $("e-parts").addEventListener("change", function (ev) {
+    var id = ev.target.getAttribute("data-part");
+    if (!id) return;
+    if (ev.target.checked) draftParts.add(id); else draftParts.delete(id);
+  });
+  $("sel-all").addEventListener("click", function () {
+    draftParts = new Set(state.people.map(function (p) { return p.id; }));
+    renderForm();
+  });
+  $("sel-none").addEventListener("click", function () {
+    draftParts = new Set();
+    renderForm();
+  });
+
+  $("expense-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var desc = $("e-desc").value.trim();
+    var amount = Math.round(parseFloat($("e-amount").value) * 100);
+    var paidBy = $("e-paid").value;
+    var parts = state.people.filter(function (p) { return draftParts.has(p.id); }).map(function (p) { return p.id; });
+    var err = $("e-error");
+    if (!state.people.length) { err.textContent = "Add at least one person first."; return; }
+    if (!desc) { err.textContent = "Enter what the expense was for."; return; }
+    if (!isFinite(amount) || amount <= 0) { err.textContent = "Enter an amount greater than zero."; return; }
+    if (!paidBy) { err.textContent = "Choose who paid."; return; }
+    if (!parts.length) { err.textContent = "Choose at least one person to split with."; return; }
+
+    if (editingId) {
+      var e = state.expenses.find(function (x) { return x.id === editingId; });
+      if (e) { e.desc = desc; e.amount = amount; e.paidBy = paidBy; e.participants = parts; }
+      toast("Changes saved.");
+    } else {
+      state.expenses.push({ id: uid(), desc: desc, amount: amount, paidBy: paidBy, participants: parts });
+      toast("Expense added.");
+    }
+    clearForm();
+    saveLocal();
+    render();
+    $("e-desc").focus();
+  });
+
+  $("e-cancel").addEventListener("click", function () {
+    clearForm();
+    render();
+  });
+
+  $("expenses").addEventListener("click", function (ev) {
+    var edit = ev.target.closest("[data-edit]");
+    var del = ev.target.closest("[data-delete]");
+    if (edit) {
+      var e = state.expenses.find(function (x) { return x.id === edit.getAttribute("data-edit"); });
+      if (!e) return;
+      editingId = e.id;
+      $("e-desc").value = e.desc;
+      $("e-amount").value = (e.amount / 100).toFixed(2);
+      draftParts = new Set(e.participants);
+      renderForm();
+      $("e-paid").value = e.paidBy;
+      $("expense-form").scrollIntoView({ behavior: "smooth", block: "start" });
+      $("e-desc").focus({ preventScroll: true });
+    } else if (del) {
+      var target = state.expenses.find(function (x) { return x.id === del.getAttribute("data-delete"); });
+      if (!target) return;
+      if (!confirm('Delete "' + target.desc + '" (' + fmt(target.amount) + ")?")) return;
+      state.expenses = state.expenses.filter(function (x) { return x.id !== target.id; });
+      if (editingId === target.id) clearForm();
+      saveLocal();
+      render();
+    }
+  });
+
+  $("copy-link").addEventListener("click", function () {
+    var url = location.origin + location.pathname + HASH_PREFIX + encodeState(state);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(
+        function () { toast("Share link copied."); },
+        function () { window.prompt("Copy this link:", url); }
+      );
+    } else {
+      window.prompt("Copy this link:", url);
+    }
+  });
+
+  $("export").addEventListener("click", function () {
+    var slug = (state.name || "trip").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = slug + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    toast("Backup downloaded.");
+  });
+
+  $("import-btn").addEventListener("click", function () { $("import-file").click(); });
+  $("import-file").addEventListener("change", function (ev) {
+    var file = ev.target.files && ev.target.files[0];
+    ev.target.value = "";
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data = null;
+      try { data = normalize(JSON.parse(reader.result)); } catch (e) { data = null; }
+      if (!data) { toast("That file is not a valid trip backup."); return; }
+      if (!isEmpty(state) && !confirm("Loading this backup replaces the trip currently in this browser. Continue?")) return;
+      adopt(data);
+      toast("Backup loaded.");
+    };
+    reader.readAsText(file);
+  });
+
+  $("reset").addEventListener("click", function () {
+    if (!confirm("Start a new trip? This clears everything in this browser. Download a backup first if you need it.")) return;
+    adopt(blank());
+  });
+
+  $("banner-load").addEventListener("click", function () {
+    if (pendingShared) adopt(pendingShared);
+    pendingShared = null;
+    $("banner").classList.add("hidden");
+    toast("Shared trip loaded.");
+  });
+  $("banner-keep").addEventListener("click", function () {
+    pendingShared = null;
+    $("banner").classList.add("hidden");
+  });
+
+  window.addEventListener("hashchange", checkHash);
+
+  render();
+  checkHash();
+})();
+</script>
+</body>
+</html>
