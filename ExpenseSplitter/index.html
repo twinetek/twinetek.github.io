@@ -48,6 +48,8 @@ main { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; }
 h1, h2 { margin: 0; font-weight: 800; letter-spacing: -0.01em; }
 h2 { font-size: 1.25rem; margin-bottom: 12px; }
 section { margin-top: 28px; }
+.dlg-body .panel { border: 0; padding: 0; background: transparent; }
+.dlg-body section { margin-top: 0; }
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -163,7 +165,7 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
 }
 .banner p { margin: 0 0 10px; }
 .toast {
-  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  position: fixed; z-index: 100; left: 50%; bottom: 20px; transform: translateX(-50%);
   background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px;
   font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.2s; max-width: calc(100% - 32px);
 }
@@ -171,7 +173,46 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
 .hidden { display: none !important; }
 .tools { display: flex; gap: 10px; flex-wrap: wrap; }
 .note { color: var(--muted); font-size: 0.9rem; margin: 10px 0 0; }
-@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+/* header + menu */
+.top { display: flex; align-items: flex-start; gap: 12px; }
+.top .title { flex: 1; min-width: 0; }
+.menu-wrap { position: relative; flex: none; }
+.burger {
+  width: 48px; height: 48px; padding: 0; display: inline-flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 5px; border-radius: 10px;
+}
+.burger span { display: block; width: 22px; height: 2px; background: var(--ink); border-radius: 2px; transition: transform 0.18s, opacity 0.18s; }
+.burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; min-width: 220px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18); padding: 6px; display: flex; flex-direction: column;
+}
+.menu button {
+  text-align: left; border: 0; background: transparent; min-height: 48px; padding: 0 14px;
+  font-size: 1rem; border-radius: 8px; width: 100%;
+}
+.menu button:hover, .menu button:focus-visible { background: var(--bg); filter: none; }
+
+/* dialogs */
+dialog {
+  width: min(560px, calc(100% - 24px)); max-height: calc(100% - 24px);
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 0; overflow: auto; margin: auto;
+}
+dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
+.dlg-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); z-index: 1;
+}
+.dlg-head h2 { margin: 0; }
+.dlg-close { width: 44px; padding: 0; font-size: 1.4rem; line-height: 1; border: 0; background: transparent; color: var(--muted); }
+.dlg-body { padding: 16px; }
+.toast[popover] { inset: auto; left: 50%; bottom: 20px; margin: 0; border: 0; transform: translateX(-50%); overflow: visible; }
+@media (prefers-reduced-motion: reduce) { .toast, .burger span { transition: none; } }
 @media (max-width: 480px) { .row.stack-sm { flex-direction: column; } }
 </style>
 </head>
@@ -185,65 +226,27 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
     </div>
   </div>
 
-  <header>
-    <label for="trip-name" class="hidden">Trip name</label>
-    <input id="trip-name" class="trip-name" type="text" placeholder="Name this trip" maxlength="80" autocomplete="off">
-    <p class="total" id="total"></p>
+  <header class="top">
+    <div class="title">
+      <label for="trip-name" class="hidden">Trip name</label>
+      <input id="trip-name" class="trip-name" type="text" placeholder="Name this trip" maxlength="80" autocomplete="off">
+      <p class="total" id="total"></p>
+    </div>
+    <div class="menu-wrap">
+      <button type="button" class="burger" id="menu-btn" aria-label="Menu" aria-haspopup="true" aria-expanded="false" aria-controls="menu">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="menu hidden" id="menu" aria-label="Trip menu">
+        <button type="button" data-open="dlg-expense">Add an expense</button>
+        <button type="button" data-open="dlg-people">Manage people</button>
+        <button type="button" data-open="dlg-data">Save and share</button>
+      </nav>
+    </div>
   </header>
 
   <section aria-labelledby="h-settle">
     <h2 id="h-settle">Settle up</h2>
     <div class="panel" id="settle"></div>
-  </section>
-
-  <section aria-labelledby="h-people">
-    <h2 id="h-people">People</h2>
-    <div class="panel">
-      <form id="person-form" class="row" autocomplete="off">
-        <div style="flex: 3">
-          <label for="person-name" class="hidden">Name</label>
-          <input id="person-name" type="text" placeholder="Add a person" maxlength="40">
-        </div>
-        <button class="primary" type="submit" style="flex: 1">Add</button>
-      </form>
-      <p class="error" id="person-error" role="alert"></p>
-      <div class="chips" id="people"></div>
-    </div>
-  </section>
-
-  <section aria-labelledby="h-expense">
-    <h2 id="h-expense">Add an expense</h2>
-    <form class="panel" id="expense-form" autocomplete="off" novalidate>
-      <div class="row stack-sm">
-        <div class="field" style="flex: 2">
-          <label for="e-desc">What was it for?</label>
-          <input id="e-desc" type="text" placeholder="Car rental" maxlength="80">
-        </div>
-        <div class="field">
-          <label for="e-amount">Amount</label>
-          <input id="e-amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
-        </div>
-      </div>
-      <div class="field">
-        <label for="e-paid">Paid by</label>
-        <select id="e-paid"></select>
-      </div>
-      <div class="field">
-        <div class="label-row">
-          <label id="split-label">Split between</label>
-          <span>
-            <button type="button" class="link-btn" id="sel-all">Everyone</button>
-            <button type="button" class="link-btn" id="sel-none">None</button>
-          </span>
-        </div>
-        <div class="checks" id="e-parts" role="group" aria-labelledby="split-label"></div>
-      </div>
-      <p class="error" id="e-error" role="alert"></p>
-      <div class="actions">
-        <button class="primary" type="submit" id="e-submit">Add expense</button>
-        <button type="button" id="e-cancel" class="hidden">Cancel edit</button>
-      </div>
-    </form>
   </section>
 
   <section aria-labelledby="h-list">
@@ -255,22 +258,72 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
     <h2 id="h-bal">Who paid and who owes</h2>
     <div class="panel table-wrap" id="balances"></div>
   </section>
-
-  <section aria-labelledby="h-data">
-    <h2 id="h-data">Save and share</h2>
-    <div class="panel">
-      <div class="tools">
-        <button id="copy-link">Copy share link</button>
-        <button id="export">Download backup</button>
-        <button id="import-btn">Load backup</button>
-        <button id="reset" class="danger">Start a new trip</button>
-      </div>
-      <input type="file" id="import-file" accept="application/json,.json" class="hidden">
-      <p class="note">Your trip is saved automatically in this browser. The share link holds the whole trip in the link itself, so anyone with the link can see it. Sharing does not sync: to pass on changes, send a new link or backup.</p>
-    </div>
-  </section>
 </main>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dlg-people" aria-labelledby="h-people">
+  <div class="dlg-head"><h2 id="h-people">Manage people</h2><button type="button" class="dlg-close" data-close aria-label="Close">&times;</button></div>
+  <div class="dlg-body">
+    <form id="person-form" class="row" autocomplete="off">
+      <div style="flex: 3">
+        <label for="person-name" class="hidden">Name</label>
+        <input id="person-name" type="text" placeholder="Add a person" maxlength="40">
+      </div>
+      <button class="primary" type="submit" style="flex: 1">Add</button>
+    </form>
+    <p class="error" id="person-error" role="alert"></p>
+    <div class="chips" id="people"></div>
+  </div>
+</dialog>
+
+<dialog id="dlg-expense" aria-labelledby="h-expense">
+  <div class="dlg-head"><h2 id="h-expense">Add an expense</h2><button type="button" class="dlg-close" data-close aria-label="Close">&times;</button></div>
+  <form class="dlg-body" id="expense-form" autocomplete="off" novalidate>
+    <div class="row stack-sm">
+      <div class="field" style="flex: 2">
+        <label for="e-desc">What was it for?</label>
+        <input id="e-desc" type="text" placeholder="Car rental" maxlength="80">
+      </div>
+      <div class="field">
+        <label for="e-amount">Amount</label>
+        <input id="e-amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
+      </div>
+    </div>
+    <div class="field">
+      <label for="e-paid">Paid by</label>
+      <select id="e-paid"></select>
+    </div>
+    <div class="field">
+      <div class="label-row">
+        <label id="split-label">Split between</label>
+        <span>
+          <button type="button" class="link-btn" id="sel-all">Everyone</button>
+          <button type="button" class="link-btn" id="sel-none">None</button>
+        </span>
+      </div>
+      <div class="checks" id="e-parts" role="group" aria-labelledby="split-label"></div>
+    </div>
+    <p class="error" id="e-error" role="alert"></p>
+    <div class="actions">
+      <button class="primary" type="submit" id="e-submit">Add expense</button>
+      <button type="button" id="e-cancel" class="hidden">Cancel edit</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-data" aria-labelledby="h-data">
+  <div class="dlg-head"><h2 id="h-data">Save and share</h2><button type="button" class="dlg-close" data-close aria-label="Close">&times;</button></div>
+  <div class="dlg-body">
+    <div class="tools">
+      <button id="copy-link">Copy share link</button>
+      <button id="export">Download backup</button>
+      <button id="import-btn">Load backup</button>
+      <button id="reset" class="danger">Start a new trip</button>
+    </div>
+    <input type="file" id="import-file" accept="application/json,.json" class="hidden">
+    <p class="note">Your trip is saved automatically in this browser. The share link holds the whole trip in the link itself, so anyone with the link can see it. Sharing does not sync: to pass on changes, send a new link or backup.</p>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" popover="manual"></div>
 
 <script>
 (function () {
@@ -452,12 +505,15 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
     }).join("") || '<p class="empty">Add people first.</p>';
 
     $("e-submit").textContent = editingId ? "Save changes" : "Add expense";
+    $("h-expense").textContent = editingId ? "Edit expense" : "Add an expense";
     $("e-cancel").classList.toggle("hidden", !editingId);
   }
 
   function renderExpenses() {
     var el = $("expenses");
-    if (!state.expenses.length) { el.innerHTML = '<p class="empty">No expenses yet.</p>'; return; }
+    if (!state.expenses.length) { el.innerHTML = '<p class="empty">No expenses yet. ' + (state.people.length
+        ? '<button type="button" class="link-btn" data-open-from-empty="dlg-expense">Add an expense</button>'
+        : '<button type="button" class="link-btn" data-open-from-empty="dlg-people">Add the people on this trip</button> first.') + '</p>'; return; }
     el.innerHTML = state.expenses.map(function (e) {
       var names = state.people.filter(function (p) { return e.participants.indexOf(p.id) !== -1; })
                               .map(function (p) { return p.name; });
@@ -508,10 +564,54 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
   function toast(msg) {
     var t = $("toast");
     t.textContent = msg;
-    t.classList.add("show");
+    try { if (t.showPopover && !t.matches(":popover-open")) t.showPopover(); } catch (e) {}
+    requestAnimationFrame(function () { t.classList.add("show"); });
     clearTimeout(toast._t);
-    toast._t = setTimeout(function () { t.classList.remove("show"); }, 3000);
+    toast._t = setTimeout(function () {
+      t.classList.remove("show");
+      setTimeout(function () {
+        try { if (t.hidePopover && t.matches(":popover-open") && !t.classList.contains("show")) t.hidePopover(); } catch (e) {}
+      }, 250);
+    }, 3000);
   }
+
+  /* ---------- menu + dialogs ---------- */
+
+  var menuBtn = $("menu-btn"), menuEl = $("menu");
+  function setMenu(open) {
+    menuEl.classList.toggle("hidden", !open);
+    menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  function openDialog(id) {
+    var d = $(id);
+    setMenu(false);
+    if (!d.open) d.showModal();
+    if (id === "dlg-expense") $("e-desc").focus();
+    if (id === "dlg-people") $("person-name").focus();
+  }
+  function closeDialog(id) { var d = $(id); if (d.open) d.close(); }
+
+  menuBtn.addEventListener("click", function () { setMenu(menuEl.classList.contains("hidden")); });
+  menuEl.addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-open]");
+    if (b) openDialog(b.getAttribute("data-open"));
+  });
+  document.addEventListener("click", function (ev) {
+    if (!menuEl.classList.contains("hidden") && !ev.target.closest(".menu-wrap")) setMenu(false);
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && !menuEl.classList.contains("hidden")) { setMenu(false); menuBtn.focus(); }
+  });
+  document.querySelectorAll("dialog").forEach(function (d) {
+    d.addEventListener("click", function (ev) {
+      if (ev.target === d || ev.target.closest("[data-close]")) d.close();
+    });
+  });
+  $("dlg-expense").addEventListener("close", function () { clearForm(); renderForm(); });
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-open-from-empty]");
+    if (b) openDialog(b.getAttribute("data-open-from-empty"));
+  });
 
   function clearForm() {
     $("e-desc").value = "";
@@ -602,12 +702,11 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
     clearForm();
     saveLocal();
     render();
-    $("e-desc").focus();
+    closeDialog("dlg-expense");
   });
 
   $("e-cancel").addEventListener("click", function () {
-    clearForm();
-    render();
+    closeDialog("dlg-expense");
   });
 
   $("expenses").addEventListener("click", function (ev) {
@@ -622,8 +721,8 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
       draftParts = new Set(e.participants);
       renderForm();
       $("e-paid").value = e.paidBy;
-      $("expense-form").scrollIntoView({ behavior: "smooth", block: "start" });
-      $("e-desc").focus({ preventScroll: true });
+      $("h-expense").textContent = "Edit expense";
+      openDialog("dlg-expense");
     } else if (del) {
       var target = state.expenses.find(function (x) { return x.id === del.getAttribute("data-delete"); });
       if (!target) return;
@@ -672,6 +771,7 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
       if (!data) { toast("That file is not a valid trip backup."); return; }
       if (!isEmpty(state) && !confirm("Loading this backup replaces the trip currently in this browser. Continue?")) return;
       adopt(data);
+      closeDialog("dlg-data");
       toast("Backup loaded.");
     };
     reader.readAsText(file);
@@ -680,6 +780,7 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
   $("reset").addEventListener("click", function () {
     if (!confirm("Start a new trip? This clears everything in this browser. Download a backup first if you need it.")) return;
     adopt(blank());
+    closeDialog("dlg-data");
   });
 
   $("banner-load").addEventListener("click", function () {
