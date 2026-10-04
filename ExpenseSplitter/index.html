@@ -129,14 +129,22 @@ button:hover { filter: brightness(0.96); }
 .error { color: var(--danger); font-weight: 600; min-height: 1.4em; margin: 8px 0 0; }
 .actions { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
 
-.expense { padding: 14px 0; border-top: 1px solid var(--line); }
+.expense {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-top: 1px solid var(--line);
+}
 .expense:first-child { border-top: 0; padding-top: 0; }
 .expense:last-child { padding-bottom: 0; }
-.expense-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
-.expense-desc { font-weight: 600; overflow-wrap: anywhere; }
+.expense-main { flex: 1; min-width: 0; }
+.expense-desc { display: block; font-weight: 600; overflow-wrap: anywhere; line-height: 1.25; }
 .amount { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.meta { color: var(--muted); font-size: 0.9rem; margin-top: 2px; overflow-wrap: anywhere; }
-.expense .actions { margin-top: 8px; }
+.meta { color: var(--muted); font-size: 0.85rem; margin-top: 1px; line-height: 1.25; overflow-wrap: anywhere; }
+.expense-btns { display: flex; gap: 6px; flex: none; }
+.expense-btns button { min-height: 36px; padding: 0 10px; font-size: 0.85rem; }
+@media (max-width: 420px) {
+  .expense { gap: 8px; }
+  .expense-btns button { padding: 0 8px; }
+}
 
 .settle { list-style: none; margin: 0; padding: 0; }
 .settle li {
@@ -173,6 +181,59 @@ thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 
 .hidden { display: none !important; }
 .tools { display: flex; gap: 10px; flex-wrap: wrap; }
 .note { color: var(--muted); font-size: 0.9rem; margin: 10px 0 0; }
+
+.sec-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.sec-head h2 { margin: 0; }
+
+.how > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; min-height: 44px; margin-bottom: 4px; }
+.how > summary::-webkit-details-marker { display: none; }
+.how > summary h2 { margin: 0; }
+.how > summary::after { content: ""; flex: none; width: 10px; height: 10px; margin-right: 6px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform 0.15s; }
+.how[open] > summary::after { transform: rotate(-135deg); }
+.how > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { .how > summary::after { transition: none; } }
+
+/* swim-lane grid */
+.panel.flush { padding: 12px 8px; }
+.g-scroll { --lw: 88px; --cw: 56px; overflow-x: auto; }
+@media (min-width: 560px) { .g-scroll { --lw: 170px; --cw: 84px; } .panel.flush { padding: 12px; } }
+.g-row { display: grid; position: relative; align-items: center; }
+.g-head { padding-bottom: 6px; }
+.g-person { text-align: center; font-weight: 700; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px; }
+.g-exp.band { background: var(--bg); border-radius: 8px; }
+.g-label { display: flex; flex-direction: column; min-width: 0; padding: 6px 6px 6px 6px; }
+.g-desc { font-weight: 600; font-size: 0.9rem; line-height: 1.2; overflow-wrap: anywhere; }
+.g-sub { color: var(--muted); font-size: 0.75rem; line-height: 1.2; overflow-wrap: anywhere; }
+.g-cell { display: flex; justify-content: center; align-items: center; padding: 8px 0; min-width: 0; }
+.g-line {
+  position: absolute; top: 50%; height: 2px; transform: translateY(-1px); background: var(--muted); opacity: 0.45;
+  left: calc(var(--lw) + (100% - var(--lw)) * (var(--min) + 0.5) / var(--n));
+  width: calc((100% - var(--lw)) * (var(--max) - var(--min)) / var(--n));
+}
+.pill {
+  position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center;
+  min-height: 28px; padding: 0 4px; border-radius: 8px; font-size: 0.78rem; white-space: nowrap;
+  font-variant-numeric: tabular-nums; min-width: calc(var(--cw) - 6px);
+}
+@media (min-width: 560px) { .pill { font-size: 0.9rem; padding: 0 8px; } }
+.pill.paid { background: var(--accent); color: var(--accent-ink); font-weight: 800; border: 1.5px solid var(--accent); }
+.pill.owes { background: var(--panel); color: var(--owe); font-weight: 600; border: 1.5px solid var(--owe); }
+.g-foot { border-top: 1px solid var(--line); }
+.g-foot.first { margin-top: 6px; padding-top: 4px; }
+.g-foot .g-label { padding-top: 2px; padding-bottom: 2px; color: var(--muted); font-size: 0.85rem; font-weight: 600; }
+.g-val { text-align: center; font-variant-numeric: tabular-nums; font-size: 0.82rem; padding: 3px 0; white-space: nowrap; }
+@media (min-width: 560px) { .g-val { font-size: 0.95rem; } }
+.g-foot.net .g-val { font-weight: 800; }
+
+/* settlement graph */
+.seg { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg .cap { margin-left: auto; color: var(--muted); font-size: 0.85rem; }
+button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.graph svg { display: block; width: 100%; max-width: 460px; margin: 8px auto 0; }
+.g-node { fill: var(--bg); stroke: var(--line); stroke-width: 1; }
+.g-name { font: 800 14px var(--font); fill: var(--ink); }
+.g-net { font: 500 12px var(--font); fill: var(--muted); }
+.g-amt { font: 700 13px var(--font); fill: var(--ink); font-variant-numeric: tabular-nums; }
 
 /* header + menu */
 .top { display: flex; align-items: flex-start; gap: 12px; }
@@ -237,26 +298,35 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
         <span></span><span></span><span></span>
       </button>
       <nav class="menu hidden" id="menu" aria-label="Trip menu">
-        <button type="button" data-open="dlg-expense">Add an expense</button>
         <button type="button" data-open="dlg-people">Manage people</button>
         <button type="button" data-open="dlg-data">Save and share</button>
       </nav>
     </div>
   </header>
 
+  <section aria-labelledby="h-list">
+    <div class="sec-head">
+      <h2 id="h-list">Expenses</h2>
+      <button type="button" class="primary small" data-open-from-empty="dlg-expense" aria-label="Add an expense">Add</button>
+    </div>
+    <div class="panel" id="expenses"></div>
+  </section>
+
+  <section aria-labelledby="h-grid">
+    <h2 id="h-grid">Who shares what</h2>
+    <div class="panel flush" id="grid"></div>
+  </section>
+
   <section aria-labelledby="h-settle">
     <h2 id="h-settle">Settle up</h2>
     <div class="panel" id="settle"></div>
   </section>
 
-  <section aria-labelledby="h-list">
-    <h2 id="h-list">Expenses</h2>
-    <div class="panel" id="expenses"></div>
-  </section>
-
-  <section aria-labelledby="h-bal">
-    <h2 id="h-bal">Who paid and who owes</h2>
-    <div class="panel table-wrap" id="balances"></div>
+  <section aria-labelledby="h-graph">
+    <details class="how">
+      <summary><h2 id="h-graph">How it adds up</h2></summary>
+      <div class="panel graph" id="graph"></div>
+    </details>
   </section>
 </main>
 
@@ -432,20 +502,28 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
 
   /* ---------- math (integer cents) ---------- */
 
+  function shares(e) {
+    var ids = state.people.filter(function (p) { return e.participants.indexOf(p.id) !== -1; })
+                          .map(function (p) { return p.id; });
+    var out = {};
+    if (!ids.length) return out;
+    var base = Math.floor(e.amount / ids.length);
+    var rem = e.amount - base * ids.length;
+    ids.forEach(function (id) {
+      out[id] = base + (rem > 0 ? 1 : 0);
+      if (rem > 0) rem--;
+    });
+    return out;
+  }
+
   function compute() {
     var paid = {}, owed = {};
     state.people.forEach(function (p) { paid[p.id] = 0; owed[p.id] = 0; });
     state.expenses.forEach(function (e) {
-      var ids = state.people.filter(function (p) { return e.participants.indexOf(p.id) !== -1; })
-                            .map(function (p) { return p.id; });
+      var sh = shares(e), ids = Object.keys(sh);
       if (!ids.length) return;
-      var base = Math.floor(e.amount / ids.length);
-      var rem = e.amount - base * ids.length;
       paid[e.paidBy] += e.amount;
-      ids.forEach(function (id) {
-        owed[id] += base + (rem > 0 ? 1 : 0);
-        if (rem > 0) rem--;
-      });
+      ids.forEach(function (id) { owed[id] += sh[id]; });
     });
     var net = {};
     state.people.forEach(function (p) { net[p.id] = paid[p.id] - owed[p.id]; });
@@ -519,12 +597,12 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
                               .map(function (p) { return p.name; });
       var split = names.length === state.people.length ? "everyone" : names.join(", ");
       return '<div class="expense">' +
-        '<div class="expense-top"><span class="expense-desc">' + esc(e.desc) + '</span>' +
-        '<span class="amount">' + fmt(e.amount) + '</span></div>' +
-        '<div class="meta">Paid by ' + esc(personName(e.paidBy)) + '. Split between ' + esc(split) + '.</div>' +
-        '<div class="actions">' +
-        '<button class="small" data-edit="' + esc(e.id) + '">Edit</button>' +
-        '<button class="small danger" data-delete="' + esc(e.id) + '">Delete</button></div></div>';
+        '<div class="expense-main"><span class="expense-desc">' + esc(e.desc) + '</span>' +
+        '<div class="meta">' + esc(personName(e.paidBy)) + ' paid, split: ' + esc(split) + '</div></div>' +
+        '<span class="amount">' + fmt(e.amount) + '</span>' +
+        '<div class="expense-btns">' +
+        '<button class="small" data-edit="' + esc(e.id) + '" aria-label="Edit ' + esc(e.desc) + '">Edit</button>' +
+        '<button class="small danger" data-delete="' + esc(e.id) + '" aria-label="Delete ' + esc(e.desc) + '">Delete</button></div></div>';
     }).join("");
   }
 
@@ -548,17 +626,166 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       }).join("") + '</ul>';
     }
 
-    var balEl = $("balances");
-    if (!state.people.length) { balEl.innerHTML = '<p class="empty">No one added yet.</p>'; return; }
-    balEl.innerHTML = '<table><thead><tr><th>Person</th><th>Paid</th><th>Share</th><th>Balance</th></tr></thead><tbody>' +
-      state.people.map(function (p) {
-        var n = r.net[p.id];
-        var cls = n > 0 ? "pos" : n < 0 ? "neg" : "";
-        var label = n > 0 ? "+" + fmt(n) : fmt(n);
-        return '<tr><td>' + esc(p.name) + '</td><td>' + fmt(r.paid[p.id]) + '</td><td>' + fmt(r.owed[p.id]) +
-          '</td><td class="' + cls + '">' + label + '</td></tr>';
-      }).join("") + '</tbody></table>' +
-      '<p class="note">A positive balance means the group owes that person. A negative balance means they owe the group.</p>';
+    renderGrid(r);
+    renderGraph(r);
+  }
+
+  /* ---------- swim-lane grid ---------- */
+
+  function renderGrid(r) {
+    var el = $("grid"), ppl = state.people, n = ppl.length;
+    if (!n) { el.innerHTML = '<p class="empty">No one added yet.</p>'; return; }
+    if (!state.expenses.length) { el.innerHTML = '<p class="empty">Add an expense and it will line up here with everyone sharing it.</p>'; return; }
+    var cols = "grid-template-columns:var(--lw) repeat(" + n + ",minmax(var(--cw),1fr))";
+    var html = '<div class="g-scroll"><div class="g-inner" style="min-width:calc(var(--lw) + ' + n + ' * var(--cw))">';
+    html += '<div class="g-row g-head" style="' + cols + '"><span></span>' + ppl.map(function (p) {
+      return '<span class="g-person" title="' + esc(p.name) + '">' + esc(p.name) + '</span>';
+    }).join("") + '</div>';
+
+    state.expenses.forEach(function (e, ri) {
+      var sh = shares(e), min = n, max = -1, cells = "";
+      ppl.forEach(function (p, i) {
+        var isPayer = p.id === e.paidBy, has = sh[p.id] !== undefined;
+        if (isPayer || has) { min = Math.min(min, i); max = Math.max(max, i); }
+        if (isPayer) cells += '<span class="g-cell"><span class="pill paid">' + (has ? fmt(sh[p.id]) : "paid") + '</span></span>';
+        else if (has) cells += '<span class="g-cell"><span class="pill owes">' + fmt(sh[p.id]) + '</span></span>';
+        else cells += '<span class="g-cell"></span>';
+      });
+      var line = max > min ? '<span class="g-line" style="--min:' + min + ';--max:' + max + ';--n:' + n + '"></span>' : "";
+      html += '<div class="g-row g-exp' + (ri % 2 ? "" : " band") + '" style="' + cols + '">' + line +
+        '<span class="g-label"><span class="g-desc">' + esc(e.desc) + '</span><span class="g-sub">' +
+        fmt(e.amount) + ', paid by ' + esc(personName(e.paidBy)) + '</span></span>' + cells + '</div>';
+    });
+
+    function foot(label, cls, val) {
+      return '<div class="g-row g-foot ' + cls + '" style="' + cols + '"><span class="g-label">' + label + '</span>' +
+        ppl.map(function (p) { return val(p); }).join("") + '</div>';
+    }
+    html += foot("Paid", "first", function (p) { return '<span class="g-val">' + fmt(r.paid[p.id]) + '</span>'; });
+    html += foot("Share", "", function (p) { return '<span class="g-val">' + fmt(r.owed[p.id]) + '</span>'; });
+    html += foot("Net", "net", function (p) {
+      var v = r.net[p.id];
+      return '<span class="g-val ' + (v > 0 ? "pos" : v < 0 ? "neg" : "") + '">' + (v > 0 ? "+" + fmt(v) : fmt(v)) + '</span>';
+    });
+    html += '</div></div><p class="note">Filled box: who paid, with their own share. Outlined boxes: what everyone else owes the payer. A line joins everyone sharing an expense. A positive net means the group owes that person. A negative net means they owe the group.</p>';
+    el.innerHTML = html;
+  }
+
+  /* ---------- settlement graph ---------- */
+
+  var graphStep = 1;
+  var GRAPH_TEXT = {
+    1: "Every debt between two people, added up across expenses. Arrows point to the person who is owed.",
+    2: "Opposite debts between the same two people cancel each other.",
+    3: "The fewest payments that settle everyone. This matches Settle up."
+  };
+
+  function debtMap() {
+    var m = {};
+    state.expenses.forEach(function (e) {
+      var sh = shares(e);
+      Object.keys(sh).forEach(function (id) {
+        if (id === e.paidBy) return;
+        m[id] = m[id] || {};
+        m[id][e.paidBy] = (m[id][e.paidBy] || []).concat([sh[id]]);
+      });
+    });
+    return m;
+  }
+
+  function graphEdges(step, r) {
+    var d = debtMap(), ppl = state.people, list = [];
+    function lst(a, b) { return (d[a] && d[a][b]) || []; }
+    function sum(a) { return a.reduce(function (s, x) { return s + x; }, 0); }
+    if (step === 1) {
+      ppl.forEach(function (a) {
+        ppl.forEach(function (b) {
+          if (a.id === b.id) return;
+          var l = lst(a.id, b.id);
+          if (!l.length) return;
+          list.push({ a: a.id, b: b.id, off: lst(b.id, a.id).length ? 9 : 0, label: l.map(fmt).join(" + ") });
+        });
+      });
+    } else if (step === 2) {
+      for (var i = 0; i < ppl.length; i++) {
+        for (var j = i + 1; j < ppl.length; j++) {
+          var a = ppl[i].id, b = ppl[j].id, diff = sum(lst(a, b)) - sum(lst(b, a));
+          if (diff > 0) list.push({ a: a, b: b, off: 0, label: fmt(diff) });
+          else if (diff < 0) list.push({ a: b, b: a, off: 0, label: fmt(-diff) });
+        }
+      }
+    } else {
+      settle(r.net).forEach(function (t) { list.push({ a: t.from, b: t.to, off: 0, label: fmt(t.amt) }); });
+    }
+    return list;
+  }
+
+  function segInside(S, ux, uy, c, hw, hh) {
+    var lo = -1e9, hi = 1e9;
+    [[S.x, ux, c.x, hw], [S.y, uy, c.y, hh]].forEach(function (q) {
+      if (Math.abs(q[1]) < 1e-9) { if (Math.abs(q[0] - q[2]) > q[3]) { lo = 1e9; hi = -1e9; } }
+      else {
+        var t1 = (q[2] - q[3] - q[0]) / q[1], t2 = (q[2] + q[3] - q[0]) / q[1];
+        lo = Math.max(lo, Math.min(t1, t2)); hi = Math.min(hi, Math.max(t1, t2));
+      }
+    });
+    return lo <= hi ? [lo, hi] : null;
+  }
+
+  function renderGraph(r) {
+    var el = $("graph"), ppl = state.people, n = ppl.length;
+    if (n < 2 || !state.expenses.length) {
+      el.innerHTML = '<p class="empty">Add at least two people and an expense to see how the payments work out.</p>';
+      return;
+    }
+    var HW = n <= 4 ? 48 : n <= 6 ? 42 : 38, HH = 22, GAP = 7, pos = {};
+    var start = (-90 - 180 / n) * Math.PI / 180;
+    ppl.forEach(function (p, i) {
+      var ang = start + i * 2 * Math.PI / n;
+      pos[p.id] = { x: 200 + 150 * Math.cos(ang), y: 190 + 125 * Math.sin(ang) };
+    });
+
+    var edges = graphEdges(graphStep, r), final = graphStep === 3;
+    var mk = final ? "url(#ah-ok)" : "url(#ah-owe)", stroke = final ? "var(--accent)" : "var(--owe)";
+    var svg = '<svg viewBox="0 0 400 380" role="img" aria-label="Arrows showing who pays whom"><defs>' +
+      ['owe', 'ok'].map(function (k) {
+        return '<marker id="ah-' + k + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">' +
+          '<path d="M2 1L8 5L2 9" fill="none" style="stroke:' + (k === 'ok' ? 'var(--accent)' : 'var(--owe)') + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>';
+      }).join("") + '</defs>';
+
+    edges.forEach(function (e) {
+      var A = pos[e.a], B = pos[e.b], dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy);
+      var ux = dx / L, uy = dy / L, nx = -uy, ny = ux, off = e.off;
+      var S = { x: A.x + nx * off, y: A.y + ny * off };
+      var ia = segInside(S, ux, uy, A, HW + GAP, HH + GAP), ib = segInside(S, ux, uy, B, HW + GAP, HH + GAP);
+      var s0 = ia ? ia[1] : 0, s1 = ib ? ib[0] : L;
+      var sign = off ? (off > 0 ? 1 : -1) : (Math.abs(ny) > 1e-9 ? (ny < 0 ? 1 : -1) : (nx > 0 ? 1 : -1));
+      var dist = off ? Math.abs(off) + 15 : 15, mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+      var lx = mx + nx * sign * dist, ly = my + ny * sign * dist, anchor = "middle";
+      if (Math.abs(nx * sign) > 0.6) { anchor = nx * sign > 0 ? "start" : "end"; lx = mx + (nx * sign > 0 ? 10 : -10); ly = my; }
+      svg += '<line x1="' + (S.x + ux * s0).toFixed(1) + '" y1="' + (S.y + uy * s0).toFixed(1) + '" x2="' + (S.x + ux * s1).toFixed(1) +
+        '" y2="' + (S.y + uy * s1).toFixed(1) + '" style="stroke:' + stroke + '" stroke-width="' + (final ? 2.5 : 1.5) + '" marker-end="' + mk + '"/>' +
+        '<text class="g-amt" x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" dominant-baseline="central">' + esc(e.label) + '</text>';
+    });
+
+    var maxc = Math.floor((HW * 2 - 12) / 8);
+    ppl.forEach(function (p) {
+      var c = pos[p.id], v = r.net[p.id];
+      var nm = p.name.length > maxc ? p.name.slice(0, maxc - 1) + "\u2026" : p.name;
+      var sub = v < 0 ? "owes " + fmt(-v) : v > 0 ? "owed " + fmt(v) : "even";
+      svg += '<g><title>' + esc(p.name) + '</title><rect class="g-node" x="' + (c.x - HW).toFixed(1) + '" y="' + (c.y - HH).toFixed(1) +
+        '" width="' + (HW * 2) + '" height="' + (HH * 2) + '" rx="8"/>' +
+        '<text class="g-name" x="' + c.x.toFixed(1) + '" y="' + (c.y - 7).toFixed(1) + '" text-anchor="middle" dominant-baseline="central">' + esc(nm) + '</text>' +
+        '<text class="g-net" x="' + c.x.toFixed(1) + '" y="' + (c.y + 10).toFixed(1) + '" text-anchor="middle" dominant-baseline="central">' + esc(sub) + '</text></g>';
+    });
+    svg += '</svg>';
+
+    var btns = [[1, "Every debt"], [2, "Netted by pair"], [3, "Fewest payments"]].map(function (x) {
+      return '<button type="button" class="small' + (graphStep === x[0] ? " on" : "") + '" data-gstep="' + x[0] + '" aria-pressed="' + (graphStep === x[0]) + '">' + x[1] + '</button>';
+    }).join("");
+    var count = edges.length ? edges.length + (final ? (edges.length === 1 ? " payment" : " payments") : (edges.length === 1 ? " arrow" : " arrows")) : "Nothing to settle";
+    el.innerHTML = '<div class="seg" role="group" aria-label="Graph step">' + btns + '<span class="cap">' + count + '</span></div>' + svg +
+      '<p class="note">' + GRAPH_TEXT[graphStep] + '</p>';
   }
 
   function toast(msg) {
@@ -792,6 +1019,15 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
   $("banner-keep").addEventListener("click", function () {
     pendingShared = null;
     $("banner").classList.add("hidden");
+  });
+
+  $("graph").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-gstep]");
+    if (!b) return;
+    graphStep = +b.getAttribute("data-gstep");
+    renderGraph(compute());
+    var again = $("graph").querySelector('[data-gstep="' + graphStep + '"]');
+    if (again) again.focus();
   });
 
   window.addEventListener("hashchange", checkHash);
