@@ -616,21 +616,23 @@ footer.view-foot { margin-top: 36px; border-top: 1px solid var(--line); padding-
     return displayName(s, p) !== p.name ? [p.name, "(" + p.household + ")"] : [p.name];
   }
 
-  function graphHtml(s, width, filter) {
+  // Shared circle layout, used by the on-screen graph and the PDF.
+  // measure(text, bold) returns a width in the same units as W.
+  function graphLayout(s, W, baseFs, measure) {
     var order = cycleOrder(s), n = order.length;
-    var W = Math.max(300, Math.min(width, 680));
-    var lineH = 17, nodeR = 7, gap = 9, pad = 6;
+    var fs = baseFs, lineH = Math.round(fs * 1.22), nodeR = fs * 0.5, gap = fs * 0.65, pad = 6;
     var maxW = 0, maxLines = 1;
     order.forEach(function (p) {
       var lines = labelLines(s, p);
       maxLines = Math.max(maxLines, lines.length);
-      lines.forEach(function (t, i) { maxW = Math.max(maxW, textWidth(t, i ? 400 : 600)); });
+      lines.forEach(function (t, i) { maxW = Math.max(maxW, measure(t, !i)); });
     });
-    // On narrow screens, shrink the labels (down to 11px) so long names still fit.
-    var fs = 14, rxMin = 70, room = W / 2 - nodeR - gap - pad - rxMin;
+    // When space is tight, shrink the labels (down to about 11px) so long names still fit.
+    var rxMin = 70, room = W / 2 - nodeR - gap - pad - rxMin;
     if (maxW > room) {
-      fs = Math.max(11, 14 * room / maxW);
-      maxW = maxW * fs / 14;
+      var nf = Math.max(baseFs * 0.78, baseFs * room / maxW);
+      maxW = maxW * nf / fs;
+      fs = nf;
       lineH = Math.round(fs * 1.22);
     }
     var blockH = maxLines * lineH;
@@ -647,6 +649,41 @@ footer.view-foot { margin-top: 36px; border-top: 1px solid var(--line); padding-
       pos[p.id] = { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a), c: Math.cos(a), s: Math.sin(a) };
     });
 
+    var nodes = order.map(function (p) {
+      var o = pos[p.id], lines = labelLines(s, p), off = nodeR + gap, anchor, x, y0;
+      if (Math.abs(o.c) < 0.35) {
+        anchor = "middle"; x = o.x;
+        y0 = o.s < 0 ? o.y - off - (lines.length - 1) * lineH : o.y + off + fs * 0.8;
+      } else {
+        anchor = o.c > 0 ? "start" : "end";
+        x = o.x + (o.c > 0 ? off : -off);
+        y0 = o.y + fs * 0.35 - (lines.length - 1) * lineH / 2;
+      }
+      return {
+        p: p, x: o.x, y: o.y, anchor: anchor, tx: x,
+        lines: lines.map(function (t, i) { return { t: t, y: y0 + i * lineH, sub: i > 0 }; })
+      };
+    });
+
+    var edges = order.map(function (g) {
+      var r = byId(s, s.draw[g.id]);
+      var a = pos[g.id], b = pos[r.id];
+      var dx = b.x - a.x, dy = b.y - a.y, k = 0.16;
+      var q = [(a.x + b.x) / 2 - dy * k, (a.y + b.y) / 2 + dx * k];
+      function toward(pt, d) {
+        var vx = q[0] - pt.x, vy = q[1] - pt.y, L = Math.hypot(vx, vy) || 1;
+        return [pt.x + vx / L * d, pt.y + vy / L * d];
+      }
+      return { from: g.id, to: r.id, p0: toward(a, nodeR + 3), q: q, p1: toward(b, nodeR + 3) };
+    });
+
+    return { W: W, H: H, fs: fs, lineH: lineH, nodeR: nodeR, nodes: nodes, edges: edges };
+  }
+
+  function graphHtml(s, width, filter) {
+    var W = Math.max(300, Math.min(width, 680));
+    var L = graphLayout(s, W, 14, function (t, bold) { return textWidth(t, bold ? 600 : 400); });
+
     // Who is highlighted: a tapped name, or else whoever matches the search box.
     var q = (filter || "").trim().toLowerCase();
     var lit = null;
@@ -659,52 +696,29 @@ footer.view-foot { margin-top: 36px; border-top: 1px solid var(--line); padding-
         '<path class="ah-' + k + '" d="M0,0 L10,5 L0,10 z"/></marker>';
     }).join("");
 
-    var edges = order.map(function (g) {
-      var r = byId(s, s.draw[g.id]);
-      var a = pos[g.id], b = pos[r.id];
-      var dx = b.x - a.x, dy = b.y - a.y;
-      var k = 0.16;
-      var mx = (a.x + b.x) / 2 - dy * k, my = (a.y + b.y) / 2 + dx * k;
-      function toward(p, tx, ty, d) {
-        var vx = tx - p.x, vy = ty - p.y, L = Math.hypot(vx, vy) || 1;
-        return [p.x + vx / L * d, p.y + vy / L * d];
-      }
-      var p0 = toward(a, mx, my, nodeR + 3), p1 = toward(b, mx, my, nodeR + 3);
+    function f(v) { return v.toFixed(1); }
+    var edges = L.edges.map(function (e) {
       var cls = "base";
-      if (lit) {
-        if (lit.has(g.id)) cls = "out";
-        else if (lit.has(r.id)) cls = "in";
-        else cls = "dim";
-      }
+      if (lit) cls = lit.has(e.from) ? "out" : lit.has(e.to) ? "in" : "dim";
       var marker = cls === "dim" ? "base" : cls;
-      return '<path class="edge ' + cls + '" marker-end="url(#' + id + "-" + marker + ')" d="M' +
-        p0[0].toFixed(1) + "," + p0[1].toFixed(1) + " Q" + mx.toFixed(1) + "," + my.toFixed(1) + " " +
-        p1[0].toFixed(1) + "," + p1[1].toFixed(1) + '"/>';
+      return { hot: cls === "out" || cls === "in", html: '<path class="edge ' + cls + '" marker-end="url(#' + id + "-" + marker + ')" d="M' +
+        f(e.p0[0]) + "," + f(e.p0[1]) + " Q" + f(e.q[0]) + "," + f(e.q[1]) + " " + f(e.p1[0]) + "," + f(e.p1[1]) + '"/>' };
     });
     // Draw highlighted arrows last so they sit on top.
-    edges.sort(function (x, y) { return (/ (out|in)"/.test(x) ? 1 : 0) - (/ (out|in)"/.test(y) ? 1 : 0); });
+    edges.sort(function (x, y) { return (x.hot ? 1 : 0) - (y.hot ? 1 : 0); });
 
-    var nodes = order.map(function (p) {
-      var o = pos[p.id], lines = labelLines(s, p), off = nodeR + gap, anchor, x, y0;
-      if (Math.abs(o.c) < 0.35) {
-        anchor = "middle"; x = o.x;
-        y0 = o.s < 0 ? o.y - off - (lines.length - 1) * lineH : o.y + off + fs * 0.8;
-      } else {
-        anchor = o.c > 0 ? "start" : "end";
-        x = o.x + (o.c > 0 ? off : -off);
-        y0 = o.y + fs * 0.35 - (lines.length - 1) * lineH / 2;
-      }
-      var r = byId(s, s.draw[p.id]);
+    var nodes = L.nodes.map(function (nd) {
+      var p = nd.p, r = byId(s, s.draw[p.id]);
       var linked = lit && (lit.has(p.id) || lit.has(s.draw[p.id]) || Array.from(lit).some(function (lid) { return s.draw[lid] === p.id; }));
       var cls = "node" + (graphFocus === p.id ? " sel" : "") + (lit && !linked ? " dim" : "");
-      var tspans = lines.map(function (t, i) {
-        return '<tspan x="' + x.toFixed(1) + '" y="' + (y0 + i * lineH).toFixed(1) + '"' + (i ? ' class="hh"' : "") + ">" + esc(t) + "</tspan>";
+      var tspans = nd.lines.map(function (ln) {
+        return '<tspan x="' + f(nd.tx) + '" y="' + f(ln.y) + '"' + (ln.sub ? ' class="hh"' : "") + ">" + esc(ln.t) + "</tspan>";
       }).join("");
       return '<g class="' + cls + '" data-node="' + p.id + '" tabindex="0" role="button" aria-pressed="' + (graphFocus === p.id) + '" aria-label="' +
         esc(displayName(s, p) + " is buying for " + displayName(s, r)) + '">' +
-        '<circle class="hit" cx="' + o.x.toFixed(1) + '" cy="' + o.y.toFixed(1) + '" r="18"/>' +
-        '<circle class="dot" cx="' + o.x.toFixed(1) + '" cy="' + o.y.toFixed(1) + '" r="' + nodeR + '"/>' +
-        '<text text-anchor="' + anchor + '">' + tspans + "</text></g>";
+        '<circle class="hit" cx="' + f(nd.x) + '" cy="' + f(nd.y) + '" r="18"/>' +
+        '<circle class="dot" cx="' + f(nd.x) + '" cy="' + f(nd.y) + '" r="' + L.nodeR + '"/>' +
+        '<text text-anchor="' + nd.anchor + '">' + tspans + "</text></g>";
     }).join("");
 
     var caption;
@@ -721,9 +735,9 @@ footer.view-foot { margin-top: 36px; border-top: 1px solid var(--line); padding-
       caption = '<span class="hint">Each arrow points from a person to the one they are buying for. Tap a name to highlight it.</span>';
     }
 
-    return '<div class="graph-wrap"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H +
-      '" style="--gfs:' + fs.toFixed(1) + 'px" role="group" aria-label="Matches arranged in a circle"><defs>' + defs + "</defs>" +
-      edges.join("") + nodes + '</svg><p class="graph-caption" aria-live="polite">' + caption + "</p></div>";
+    return '<div class="graph-wrap"><svg width="' + L.W + '" height="' + L.H + '" viewBox="0 0 ' + L.W + " " + L.H +
+      '" style="--gfs:' + L.fs.toFixed(1) + 'px" role="group" aria-label="Matches arranged in a circle"><defs>' + defs + "</defs>" +
+      edges.map(function (e) { return e.html; }).join("") + nodes + '</svg><p class="graph-caption" aria-live="polite">' + caption + "</p></div>";
   }
 
   function syncMviewButtons() {
@@ -842,23 +856,58 @@ footer.view-foot { margin-top: 36px; border-top: 1px solid var(--line); padding-
     var m = 54, tableW = pageW - 2 * m, colW = tableW / 2, padX = 10, padY = 7, fs = 12, lh = fs * 1.25;
     var y = m;
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    var title = doc.splitTextToSize(s.name || "Gift exchange", tableW);
-    doc.text(title, m, y + 16);
-    y += 16 + (title.length - 1) * 24 + 10;
-    var facts = [];
-    if (s.date) facts.push("Date: " + formatDate(s.date));
-    if (s.budget) facts.push("Spending limit: " + s.budget);
-    if (facts.length) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(90);
-      facts.forEach(function (t) { y += 14; doc.text(t, m, y); });
-      doc.setTextColor(0);
-    }
-    y += 20;
+    function ensure(h) { if (y + h > pageH - m) { doc.addPage(); y = m; return true; } return false; }
 
+    // Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    var title = doc.splitTextToSize(s.name || "Gift exchange", tableW);
+    doc.text(title, m, y + 18, { lineHeightFactor: 1.2 });
+    y += 18 + (title.length - 1) * 26 + 22;
+
+    // Details
+    function sectionHeading(t) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(15);
+      doc.setTextColor(0);
+      doc.text(t, m, y + 12);
+      y += 24;
+    }
+    sectionHeading("Details");
+    var labelW = 100;
+    var details = [];
+    if (s.date) details.push(["Date", formatDate(s.date)]);
+    if (s.budget) details.push(["Spending limit", s.budget]);
+    details.push(["People", String(s.people.length)]);
+    doc.setFontSize(11.5);
+    details.forEach(function (d) {
+      doc.setFont("helvetica", "normal"); doc.setTextColor(90);
+      doc.text(d[0], m, y + 11);
+      doc.setFont("helvetica", "bold"); doc.setTextColor(0);
+      var v = doc.splitTextToSize(d[1], tableW - labelW);
+      doc.text(v, m + labelW, y + 11, { lineHeightFactor: 1.3 });
+      y += v.length * 15 + 3;
+    });
+    if (s.note && s.note.trim()) {
+      y += 6;
+      doc.setFont("helvetica", "normal"); doc.setTextColor(90);
+      doc.text("Note", m, y + 11);
+      doc.setTextColor(0);
+      var noteLines = [];
+      s.note.split(/\r?\n/).forEach(function (para) {
+        noteLines = noteLines.concat(para.trim() ? doc.splitTextToSize(para, tableW - labelW) : [""]);
+      });
+      noteLines.forEach(function (ln, i) {
+        if (i && ensure(15)) { /* note continues on the next page */ }
+        doc.text(ln, m + labelW, y + 11);
+        y += 15;
+      });
+    }
+    y += 22;
+
+    // Match table
+    ensure(80);
+    sectionHeading("Who is buying for whom");
     function header() {
       var h = lh + 2 * padY;
       doc.setFillColor(225, 230, 240);
@@ -867,12 +916,12 @@ footer.view-foot { margin-top: 36px; border-top: 1px solid var(--line); padding-
       doc.line(m + colW, y, m + colW, y + h);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(fs);
+      doc.setTextColor(0);
       doc.text("Name", m + padX, y + padY + fs * 0.9);
       doc.text("Is buying for", m + colW + padX, y + padY + fs * 0.9);
       y += h;
     }
     header();
-
     s.people.slice().sort(byName).forEach(function (g, i) {
       var r = byId(s, s.draw[g.id]);
       doc.setFontSize(fs);
@@ -881,7 +930,7 @@ footer.view-foot { margin-top: 36px; border-top: 1px solid var(--line); padding-
       doc.setFont("helvetica", "bold");
       var b = doc.splitTextToSize(displayName(s, r), colW - 2 * padX);
       var h = Math.max(a.length, b.length) * lh + 2 * padY;
-      if (y + h > pageH - m) { doc.addPage(); y = m; header(); }
+      if (ensure(h)) header();
       if (i % 2) { doc.setFillColor(244, 246, 250); doc.rect(m, y, tableW, h, "F"); }
       doc.setDrawColor(150);
       doc.rect(m, y, tableW, h);
@@ -892,6 +941,61 @@ footer.view-foot { margin-top: 36px; border-top: 1px solid var(--line); padding-
       doc.text(b, m + colW + padX, y + padY + fs * 0.9, { lineHeightFactor: 1.25 });
       y += h;
     });
+
+    // Last page: the circle view
+    doc.addPage();
+    y = m;
+    sectionHeading("Gift circle");
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.setTextColor(90);
+    doc.text("Each arrow points from a person to the one they are buying for.", m, y + 4);
+    doc.setTextColor(0);
+    y += 22;
+
+    var baseFs = 11;
+    var L = graphLayout(s, tableW, baseFs, function (t, bold) {
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(baseFs);
+      return doc.getTextWidth(t);
+    });
+    var availH = pageH - m - y;
+    var sc = Math.min(1, availH / L.H);
+    var ox = m + (tableW - L.W * sc) / 2, oy = y;
+    function X(v) { return ox + v * sc; }
+    function Y(v) { return oy + v * sc; }
+
+    doc.setDrawColor(110);
+    doc.setFillColor(110);
+    doc.setLineWidth(1.1);
+    L.edges.forEach(function (e) {
+      var p0 = [X(e.p0[0]), Y(e.p0[1])], q = [X(e.q[0]), Y(e.q[1])], p1 = [X(e.p1[0]), Y(e.p1[1])];
+      // Stop the line at the arrowhead's base, then draw the head.
+      var tx = p1[0] - q[0], ty = p1[1] - q[1], tl = Math.hypot(tx, ty) || 1;
+      tx /= tl; ty /= tl;
+      var head = 8 * Math.max(sc, 0.6), base = [p1[0] - tx * head, p1[1] - ty * head];
+      var c1 = [p0[0] + 2 / 3 * (q[0] - p0[0]), p0[1] + 2 / 3 * (q[1] - p0[1])];
+      var c2 = [base[0] + 2 / 3 * (q[0] - base[0]), base[1] + 2 / 3 * (q[1] - base[1])];
+      doc.lines([[c1[0] - p0[0], c1[1] - p0[1], c2[0] - p0[0], c2[1] - p0[1], base[0] - p0[0], base[1] - p0[1]]], p0[0], p0[1], [1, 1], "S");
+      var w = head * 0.45;
+      doc.triangle(p1[0], p1[1], base[0] - ty * w, base[1] + tx * w, base[0] + ty * w, base[1] - tx * w, "F");
+    });
+
+    doc.setDrawColor(0);
+    doc.setFillColor(255, 255, 255);
+    doc.setLineWidth(1.4);
+    var fsz = L.fs * sc;
+    L.nodes.forEach(function (nd) {
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(0);
+      doc.circle(X(nd.x), Y(nd.y), L.nodeR * sc, "FD");
+      var align = nd.anchor === "middle" ? "center" : nd.anchor === "end" ? "right" : "left";
+      nd.lines.forEach(function (ln) {
+        doc.setFont("helvetica", ln.sub ? "normal" : "bold");
+        doc.setFontSize(fsz);
+        doc.setTextColor(ln.sub ? 90 : 0);
+        doc.text(ln.t, X(nd.tx), Y(ln.y), { align: align });
+      });
+    });
+    doc.setTextColor(0);
     return doc;
   }
 
