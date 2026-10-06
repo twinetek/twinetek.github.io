@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cliff Bender</title>
+<meta name="description" content="Projects by Cliff Bender.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔑</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+/* Tokens shared with /ExpenseSplitter */
+:root {
+  --bg: #e9f0ee;
+  --panel: #ffffff;
+  --ink: #12263a;
+  --muted: #566878;
+  --line: #c9d6d2;
+  --accent: #0e7c66;
+  --radius: 10px;
+  --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1a22;
+    --panel: #17252f;
+    --ink: #e6eef0;
+    --muted: #9db0ba;
+    --line: #2b3c47;
+    --accent: #4cc3a6;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.55;
+}
+main { max-width: 640px; margin: 0 auto; padding: 72px 24px 64px; }
+a { color: var(--accent); text-underline-offset: 0.18em; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+h1 { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.015em; }
+.contact { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 12px 0 0; padding: 0; list-style: none; font-weight: 600; }
+h2 { margin: 48px 0 14px; font-size: 1.15rem; font-weight: 800; }
+.work { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.piece {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.piece h3 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+.piece h3 a { color: var(--ink); text-decoration: none; }
+.piece h3 a:hover { color: var(--accent); text-decoration: underline; }
+.piece p { margin: 6px 0 0; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Cliff Bender</h1>
+  <ul class="contact">
+    <li><a href="https://www.linkedin.com/in/cliff-bender/">LinkedIn</a></li>
+    <li><a href="https://github.com/twinetek">GitHub</a></li>
+  </ul>
+
+  <h2>Projects</h2>
+  <ul class="work">
+    <li class="piece">
+      <h3><a href="./ExpenseSplitter/">Trip Split</a></h3>
+      <p>Split group trip expenses. Runs entirely in your browser, with no account or server.</p>
+    </li>
+    <li class="piece">
+      <h3><a href="./GiftExchangeMixer/">Gift Exchange Mixer</a></h3>
+      <p>Draw names for a gift exchange.</p>
+    </li>
+  </ul>
+</main>
+</body>
+</html>

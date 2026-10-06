@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gift Exchange Mixer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #edf1f7;
+  --panel: #ffffff;
+  --ink: #1b2340;
+  --muted: #59617d;
+  --line: #d3d9e6;
+  --accent: #b3264a;
+  --accent-ink: #ffffff;
+  --danger: #a3221c;
+  --radius: 10px;
+  --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121726;
+    --panel: #1b2236;
+    --ink: #e8ecf6;
+    --muted: #a2abc4;
+    --line: #2e3850;
+    --accent: #ff7d9a;
+    --accent-ink: #2a0712;
+    --danger: #ff8a80;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+main { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; }
+h1, h2 { margin: 0; font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 1.25rem; margin-bottom: 12px; }
+section { margin-top: 28px; }
+.hidden { display: none !important; }
+.app-name { font-size: 0.95rem; font-weight: 600; color: var(--muted); margin: 0 0 6px; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.note { color: var(--muted); font-size: 0.92rem; margin: 10px 0 0; }
+
+/* inputs and buttons */
+label { display: block; font-weight: 600; font-size: 0.92rem; margin-bottom: 4px; }
+input[type=text], input[type=date], input[type=search], textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+textarea { resize: vertical; min-height: 70px; }
+input:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.exchange-name {
+  font-size: clamp(1.7rem, 6vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  padding: 6px 10px;
+  border: 1px dashed transparent;
+  background: transparent;
+}
+.exchange-name:hover, .exchange-name:focus { border-color: var(--line); background: var(--panel); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { margin-top: 12px; }
+.field:first-child, .grid2 .field { margin-top: 0; }
+.grid2 { align-items: end; }
+input[type=text]:not(.exchange-name), input[type=date], input[type=search] { height: 46px; }
+input[type=date] { -webkit-appearance: none; appearance: none; }
+button {
+  font: inherit;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.danger { color: var(--danger); }
+button.link {
+  border: 0; background: none; padding: 4px 6px; min-height: 36px;
+  color: var(--accent); text-decoration: underline; text-underline-offset: 3px;
+}
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; margin-top: 14px; }
+.check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); }
+
+/* people */
+.add-form { display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 8px; align-items: end; }
+.people { list-style: none; margin: 14px 0 0; padding: 0; }
+.people li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-top: 1px solid var(--line);
+}
+.people li:first-child { border-top: 0; }
+.people .who { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.people .pname { flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+.people .home { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.people li .link { padding: 4px; }
+.people .pname { font-weight: 600; }
+.people .home { color: var(--muted); font-size: 0.9rem; }
+.count { color: var(--muted); font-weight: 400; font-size: 1rem; }
+.sorter { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.sorter-label { color: var(--muted); font-size: 0.92rem; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; min-height: 36px; padding: 6px 14px; font-size: 0.92rem; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+/* matches table */
+.match-wrap {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+.matches { width: 100%; border-collapse: collapse; }
+.matches th, .matches td { text-align: left; padding: 10px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+.matches thead th { border-top: 0; font-size: 0.92rem; color: var(--muted); font-weight: 600; background: var(--bg); }
+.matches tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--bg) 45%, var(--panel)); }
+.matches td:first-child { font-weight: 600; width: 50%; }
+.matches td:last-child { font-weight: 800; color: var(--accent); }
+.empty { color: var(--muted); }
+
+.pdf-row { margin-top: 14px; }
+
+/* circle view */
+.matches-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.matches-bar .mview { margin-left: auto; }
+.v-mview-wrap { margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.graph-wrap {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  padding: 6px 0 4px;
+}
+.graph-wrap svg { display: block; margin: 0 auto; }
+.graph-caption { margin: 0; padding: 6px 14px 10px; min-height: 2.2em; text-align: center; }
+.graph-caption .hint { color: var(--muted); font-size: 0.92rem; }
+.edge { fill: none; stroke: var(--muted); stroke-width: 1.6; opacity: 0.8; }
+.edge.out { stroke: var(--accent); stroke-width: 2.8; opacity: 1; }
+.edge.in { stroke: var(--ink); stroke-width: 2.8; opacity: 1; }
+.edge.dim { opacity: 0.12; }
+.ah-base { fill: var(--muted); }
+.ah-out { fill: var(--accent); }
+.ah-in { fill: var(--ink); }
+.node { cursor: pointer; outline: none; }
+.node .hit { fill: transparent; }
+.node .dot { fill: var(--panel); stroke: var(--ink); stroke-width: 2; }
+.node.sel .dot { fill: var(--accent); stroke: var(--accent); }
+.node:focus-visible .dot { stroke: var(--accent); stroke-width: 4; }
+.node text { fill: var(--ink); font-family: var(--font); font-size: var(--gfs, 14px); font-weight: 600; }
+.node text .hh { fill: var(--muted); font-weight: 400; }
+.node.dim { opacity: 0.3; }
+
+/* view mode */
+.banner {
+  background: var(--ink); color: var(--bg);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 0.95rem;
+}
+.banner strong { display: block; font-size: 1rem; }
+.view-title { font-size: clamp(2rem, 8vw, 3rem); line-height: 1.05; letter-spacing: -0.03em; margin-top: 22px; }
+.facts { margin: 14px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; }
+.view-note { white-space: pre-wrap; margin: 14px 0 0; }
+.search { margin-bottom: 14px; }
+footer.view-foot { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 14px; }
+
+/* toast */
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  background: var(--ink); color: var(--bg);
+  padding: 10px 16px; border-radius: 8px;
+  max-width: calc(100% - 32px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.25);
+}
+
+@media (max-width: 540px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .add-form { grid-template-columns: 1fr; }
+  .add-form button { width: 100%; }
+  .people .home-word { display: none; }
+}
+@media print {
+  body { background: #fff; color: #000; }
+  .banner, .search, footer.view-foot, .toast { display: none !important; }
+  .match-wrap { border: 0; overflow: visible; }
+  .matches th, .matches td { border: 1px solid #000; background: #fff !important; color: #000 !important; }
+  .matches tr { break-inside: avoid; }
+  .mview, .graph-caption .hint, .matches-bar button, .pdf-row { display: none !important; }
+  .graph-wrap { border: 0; overflow: visible; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .matches.fresh tbody tr { animation: drop 360ms ease-out both; }
+  @keyframes drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ EDIT MODE (organizer) ============ -->
+<main id="edit" class="edit hidden">
+  <p class="app-name">Gift Exchange Mixer</p>
+  <label for="x-name" class="hidden">Exchange name</label>
+  <input id="x-name" class="exchange-name" type="text" maxlength="80" placeholder="Name your exchange" autocomplete="off">
+
+  <section aria-labelledby="h-details">
+    <h2 id="h-details">Details</h2>
+    <div class="panel">
+      <div class="grid2">
+        <div class="field">
+          <label for="x-date">Exchange date</label>
+          <input id="x-date" type="date">
+        </div>
+        <div class="field">
+          <label for="x-budget">Spending limit</label>
+          <input id="x-budget" type="text" maxlength="40" placeholder="For example, $25">
+        </div>
+      </div>
+      <div class="field">
+        <label for="x-note">Note for everyone</label>
+        <textarea id="x-note" maxlength="500" placeholder="Where, when, wrapping rules, anything else"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-people">
+    <h2 id="h-people">People <span class="count" id="people-count"></span></h2>
+    <div class="panel">
+      <div class="add-form">
+        <div>
+          <label for="p-name">Name</label>
+          <input id="p-name" type="text" maxlength="40" autocomplete="off">
+        </div>
+        <div>
+          <label for="p-home">Household (optional)</label>
+          <input id="p-home" type="text" maxlength="40" list="homes" autocomplete="off" placeholder="For example, Smith">
+          <datalist id="homes"></datalist>
+        </div>
+        <div class="row">
+          <button class="primary" id="p-add">Add</button>
+          <button id="p-cancel" class="hidden">Cancel</button>
+        </div>
+      </div>
+      <p class="note">People in the same household never draw each other.</p>
+      <div class="sorter" id="sorter">
+        <span class="sorter-label" id="sort-label">Sort by</span>
+        <div class="seg" role="group" aria-labelledby="sort-label">
+          <button type="button" data-sort="name" aria-pressed="true">First name</button>
+          <button type="button" data-sort="household" aria-pressed="false">Household</button>
+        </div>
+      </div>
+      <ul class="people" id="people"></ul>
+      <label class="check"><input type="checkbox" id="x-noswaps"> <span>Avoid swaps, so two people never draw each other</span></label>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-draw">
+    <h2 id="h-draw">Matches</h2>
+    <div class="matches-bar">
+      <button class="primary" id="draw-btn">Draw names</button>
+      <div class="seg mview" role="group" aria-label="Show matches as">
+        <button type="button" data-mview="table" aria-pressed="true">Table</button>
+        <button type="button" data-mview="circle" aria-pressed="false">Circle</button>
+      </div>
+    </div>
+    <div id="draw-out"></div>
+    <div class="row pdf-row hidden" id="pdf-row">
+      <button data-pdf="save">Print to PDF</button>
+      <button data-pdf="share">Share PDF</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-share">
+    <h2 id="h-share">Share and save</h2>
+    <div class="panel">
+      <div class="row">
+        <button class="primary" id="copy-link">Copy share link</button>
+        <button id="preview-link">Preview shared page</button>
+      </div>
+      <p class="note">The share link holds the whole exchange, including every match, so anyone with it can see who is buying for whom. It always opens as a view-only page. Sharing does not sync: if you change anything or draw again, copy and send a new link.</p>
+      <div class="row" style="margin-top:14px">
+        <button id="export">Download backup</button>
+        <button id="import-btn">Load backup</button>
+        <input type="file" id="import-file" accept="application/json,.json" class="hidden">
+        <button class="danger" id="reset">Start a new exchange</button>
+      </div>
+      <p class="note">Your exchange is saved automatically in this browser. Download a backup to keep it safe or move it to another device.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ============ VIEW MODE (shared link) ============ -->
+<main id="view" class="hidden">
+  <div class="banner" role="note">
+    <strong>View only</strong>
+    This is a shared copy of the exchange. Only the organizer can make changes.
+  </div>
+  <h1 class="view-title" id="v-title"></h1>
+  <dl class="facts" id="v-facts"></dl>
+  <p class="view-note" id="v-note"></p>
+
+  <section aria-labelledby="h-vmatch">
+    <h2 id="h-vmatch">Who is buying for whom</h2>
+    <div class="v-mview-wrap" id="v-mview-wrap">
+      <span class="sorter-label">Show as</span>
+      <div class="seg mview" role="group" aria-label="Show matches as">
+        <button type="button" data-mview="table" aria-pressed="true">Table</button>
+        <button type="button" data-mview="circle" aria-pressed="false">Circle</button>
+      </div>
+    </div>
+    <div class="search" id="v-search-wrap">
+      <label for="v-search">Find a name</label>
+      <input id="v-search" type="search" autocomplete="off" placeholder="Start typing a name">
+    </div>
+    <div id="v-out"></div>
+  </section>
+
+  <footer class="view-foot row">
+    <button id="v-print">Print</button>
+    <button data-pdf="save" id="v-pdf-save">Print to PDF</button>
+    <button data-pdf="share" id="v-pdf-share">Share PDF</button>
+    <button class="link" id="v-copy">Make an editable copy</button>
+  </footer>
+</main>
+
+<div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "giftmixer.v1";
+  var HASH_PREFIX = "#g=";
+
+  var state = loadLocal() || blank();
+  var viewState = null;
+  var editingId = null;
+  var freshDraw = false;
+  var MVIEW_KEY = "giftmixer.matchview";
+  var matchView = "table";
+  try { if (localStorage.getItem(MVIEW_KEY) === "circle") matchView = "circle"; } catch (e) {}
+  var graphFocus = null;
+  var graphSeq = 0;
+  var SORT_KEY = "giftmixer.sort";
+  var peopleSort = "name";
+  try { if (localStorage.getItem(SORT_KEY) === "household") peopleSort = "household"; } catch (e) {}
+
+  // Household order: households A to Z, people without one at the end, then first name.
+  function byHousehold(a, b) {
+    var ha = (a.household || "").trim(), hb = (b.household || "").trim();
+    if (!ha !== !hb) return ha ? -1 : 1;
+    return ha.localeCompare(hb, undefined, { sensitivity: "base" }) ||
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function blank() {
+    return { name: "", date: "", budget: "", note: "", noSwaps: false, people: [], draw: null };
+  }
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function homeKey(p) { return (p.household || "").trim().toLowerCase(); }
+  function byId(s, id) { return s.people.find(function (p) { return p.id === id; }); }
+  function byName(a, b) {
+    return a.name.localeCompare(b.name, undefined, { sensitivity: "base" }) ||
+      (a.household || "").localeCompare(b.household || "", undefined, { sensitivity: "base" });
+  }
+  // When two people share a first name, show the household too: "Penny (Gregg)".
+  function displayName(s, p) {
+    if (!p) return "Unknown";
+    var key = p.name.toLowerCase();
+    var shared = s.people.some(function (o) { return o.id !== p.id && o.name.toLowerCase() === key; });
+    return shared && p.household ? p.name + " (" + p.household + ")" : p.name;
+  }
+
+  /* ---------- validation ---------- */
+
+  function canGive(s, g, r, draw) {
+    if (g.id === r.id) return false;
+    var hg = homeKey(g), hr = homeKey(r);
+    if (hg && hg === hr) return false;
+    if (s.noSwaps && draw && draw[r.id] === g.id) return false;
+    return true;
+  }
+
+  function drawIsValid(s, draw) {
+    if (!draw || typeof draw !== "object") return false;
+    if (s.people.length < 2) return false;
+    var received = new Set();
+    for (var i = 0; i < s.people.length; i++) {
+      var g = s.people[i];
+      var r = byId(s, draw[g.id]);
+      if (!r || received.has(r.id)) return false;
+      if (g.id === r.id || (homeKey(g) && homeKey(g) === homeKey(r))) return false;
+      if (s.noSwaps && draw[r.id] === g.id) return false;
+      received.add(r.id);
+    }
+    return Object.keys(draw).length === s.people.length;
+  }
+
+  function normalize(raw) {
+    if (!raw || typeof raw !== "object" || !Array.isArray(raw.people)) return null;
+    var people = [], seen = new Set();
+    raw.people.forEach(function (p) {
+      if (p && typeof p.id === "string" && !seen.has(p.id) && typeof p.name === "string" && p.name.trim()) {
+        seen.add(p.id);
+        people.push({
+          id: p.id,
+          name: p.name.trim().slice(0, 40),
+          household: String(p.household || "").trim().slice(0, 40)
+        });
+      }
+    });
+    var s = {
+      name: String(raw.name || "").slice(0, 80),
+      date: /^\d{4}-\d{2}-\d{2}$/.test(raw.date || "") ? raw.date : "",
+      budget: String(raw.budget || "").slice(0, 40),
+      note: String(raw.note || "").slice(0, 500),
+      noSwaps: !!raw.noSwaps,
+      people: people,
+      draw: null
+    };
+    if (raw.draw && typeof raw.draw === "object") {
+      var d = {};
+      Object.keys(raw.draw).forEach(function (k) { if (typeof raw.draw[k] === "string") d[k] = raw.draw[k]; });
+      if (drawIsValid(s, d)) s.draw = d;
+    }
+    return s;
+  }
+
+  /* ---------- storage ---------- */
+
+  function loadLocal() {
+    try {
+      var s = localStorage.getItem(STORAGE_KEY);
+      return s ? normalize(JSON.parse(s)) : null;
+    } catch (e) { return null; }
+  }
+  function saveLocal() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch (e) { toast("Could not save in this browser. Download a backup to be safe."); }
+  }
+  function isEmpty(s) { return !s.name && !s.date && !s.budget && !s.note && !s.people.length; }
+
+  /* ---------- share link ---------- */
+
+  function encodeState(s) {
+    var bytes = new TextEncoder().encode(JSON.stringify(s));
+    var bin = "";
+    bytes.forEach(function (b) { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function decodeState(str) {
+    var b64 = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return normalize(JSON.parse(new TextDecoder().decode(bytes)));
+  }
+  function shareUrl() {
+    return location.origin + location.pathname + HASH_PREFIX + encodeState(state);
+  }
+
+  /* ---------- routing: a share link always opens view-only ---------- */
+
+  function route() {
+    graphFocus = null;
+    if (location.hash.indexOf(HASH_PREFIX) === 0) {
+      var shared = null;
+      try { shared = decodeState(location.hash.slice(HASH_PREFIX.length)); } catch (e) { shared = null; }
+      if (shared) {
+        viewState = shared;
+        $("edit").classList.add("hidden");
+        $("view").classList.remove("hidden");
+        $("v-search").value = "";
+        renderView();
+        return;
+      }
+      history.replaceState(null, "", location.pathname + location.search);
+      toast("That share link could not be read. Ask the organizer to send it again.");
+    }
+    viewState = null;
+    $("view").classList.add("hidden");
+    $("edit").classList.remove("hidden");
+    renderEdit();
+  }
+
+  /* ---------- the draw ---------- */
+
+  function randInt(n) {
+    if (window.crypto && crypto.getRandomValues) {
+      var a = new Uint32Array(1);
+      crypto.getRandomValues(a);
+      return a[0] % n;
+    }
+    return Math.floor(Math.random() * n);
+  }
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = randInt(i + 1), t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function makeDraw(s) {
+    var people = shuffle(s.people.slice());
+    if (people.length < 2) return null;
+    var draw = {}, taken = new Set(), steps = 0;
+
+    function solve() {
+      if (++steps > 200000) return false;
+      var best = null, bestOpts = null;
+      for (var i = 0; i < people.length; i++) {
+        var g = people[i];
+        if (g.id in draw) continue;
+        var opts = people.filter(function (r) { return !taken.has(r.id) && canGive(s, g, r, draw); });
+        if (!opts.length) return false;
+        if (!best || opts.length < bestOpts.length) { best = g; bestOpts = opts; }
+      }
+      if (!best) return true;
+      shuffle(bestOpts);
+      for (var k = 0; k < bestOpts.length; k++) {
+        var r = bestOpts[k];
+        draw[best.id] = r.id; taken.add(r.id);
+        if (solve()) return true;
+        delete draw[best.id]; taken.delete(r.id);
+      }
+      return false;
+    }
+    return solve() ? draw : null;
+  }
+
+  /* ---------- rendering ---------- */
+
+  function matchesHtml(s, filter) {
+    var q = (filter || "").trim().toLowerCase();
+    var list = s.people.slice().sort(byName).filter(function (g) {
+      if (!q) return true;
+      var r = byId(s, s.draw[g.id]);
+      return displayName(s, g).toLowerCase().indexOf(q) !== -1 || (r && displayName(s, r).toLowerCase().indexOf(q) !== -1);
+    });
+    if (!list.length) return '<p class="empty">No one on the list matches "' + esc(filter.trim()) + '".</p>';
+    var rows = list.map(function (g, i) {
+      var r = byId(s, s.draw[g.id]);
+      return '<tr style="animation-delay:' + Math.min(i * 30, 600) + 'ms"><td>' + esc(displayName(s, g)) +
+        '</td><td>' + esc(displayName(s, r)) + "</td></tr>";
+    }).join("");
+    return '<div class="match-wrap"><table class="matches' + (freshDraw ? " fresh" : "") + '">' +
+      '<thead><tr><th scope="col">Name</th><th scope="col">Is buying for</th></tr></thead>' +
+      "<tbody>" + rows + "</tbody></table></div>";
+  }
+
+  /* ---------- circle view ---------- */
+
+  var FONT = '"Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  var measureCtx = document.createElement("canvas").getContext("2d");
+  function textWidth(t, weight) {
+    measureCtx.font = weight + " 14px " + FONT;
+    return measureCtx.measureText(t).width;
+  }
+
+  // Walk each gift chain so people sit next to the person they buy for.
+  function cycleOrder(s) {
+    var seen = new Set(), order = [];
+    s.people.slice().sort(byName).forEach(function (p) {
+      var cur = p;
+      while (cur && !seen.has(cur.id)) {
+        seen.add(cur.id);
+        order.push(cur);
+        cur = byId(s, s.draw[cur.id]);
+      }
+    });
+    return order;
+  }
+
+  function labelLines(s, p) {
+    return displayName(s, p) !== p.name ? [p.name, "(" + p.household + ")"] : [p.name];
+  }
+
+  function graphHtml(s, width, filter) {
+    var order = cycleOrder(s), n = order.length;
+    var W = Math.max(300, Math.min(width, 680));
+    var lineH = 17, nodeR = 7, gap = 9, pad = 6;
+    var maxW = 0, maxLines = 1;
+    order.forEach(function (p) {
+      var lines = labelLines(s, p);
+      maxLines = Math.max(maxLines, lines.length);
+      lines.forEach(function (t, i) { maxW = Math.max(maxW, textWidth(t, i ? 400 : 600)); });
+    });
+    // On narrow screens, shrink the labels (down to 11px) so long names still fit.
+    var fs = 14, rxMin = 70, room = W / 2 - nodeR - gap - pad - rxMin;
+    if (maxW > room) {
+      fs = Math.max(11, 14 * room / maxW);
+      maxW = maxW * fs / 14;
+      lineH = Math.round(fs * 1.22);
+    }
+    var blockH = maxLines * lineH;
+    var rx = Math.max(rxMin, W / 2 - maxW - nodeR - gap - pad);
+    var ry = W < 520 ? rx * 1.35 : rx;
+    ry = Math.max(ry, n * (blockH + 4) / (2 * Math.PI));
+    var vert = blockH + nodeR + gap + pad;
+    var H = Math.round(2 * ry + 2 * vert);
+    var cx = W / 2, cy = H / 2;
+
+    var pos = {};
+    order.forEach(function (p, i) {
+      var a = -Math.PI / 2 + 2 * Math.PI * i / n;
+      pos[p.id] = { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a), c: Math.cos(a), s: Math.sin(a) };
+    });
+
+    // Who is highlighted: a tapped name, or else whoever matches the search box.
+    var q = (filter || "").trim().toLowerCase();
+    var lit = null;
+    if (graphFocus && byId(s, graphFocus)) lit = new Set([graphFocus]);
+    else if (q) lit = new Set(s.people.filter(function (p) { return displayName(s, p).toLowerCase().indexOf(q) !== -1; }).map(function (p) { return p.id; }));
+
+    var id = "g" + (++graphSeq);
+    var defs = ["base", "out", "in"].map(function (k) {
+      return '<marker id="' + id + "-" + k + '" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto">' +
+        '<path class="ah-' + k + '" d="M0,0 L10,5 L0,10 z"/></marker>';
+    }).join("");
+
+    var edges = order.map(function (g) {
+      var r = byId(s, s.draw[g.id]);
+      var a = pos[g.id], b = pos[r.id];
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var k = 0.16;
+      var mx = (a.x + b.x) / 2 - dy * k, my = (a.y + b.y) / 2 + dx * k;
+      function toward(p, tx, ty, d) {
+        var vx = tx - p.x, vy = ty - p.y, L = Math.hypot(vx, vy) || 1;
+        return [p.x + vx / L * d, p.y + vy / L * d];
+      }
+      var p0 = toward(a, mx, my, nodeR + 3), p1 = toward(b, mx, my, nodeR + 3);
+      var cls = "base";
+      if (lit) {
+        if (lit.has(g.id)) cls = "out";
+        else if (lit.has(r.id)) cls = "in";
+        else cls = "dim";
+      }
+      var marker = cls === "dim" ? "base" : cls;
+      return '<path class="edge ' + cls + '" marker-end="url(#' + id + "-" + marker + ')" d="M' +
+        p0[0].toFixed(1) + "," + p0[1].toFixed(1) + " Q" + mx.toFixed(1) + "," + my.toFixed(1) + " " +
+        p1[0].toFixed(1) + "," + p1[1].toFixed(1) + '"/>';
+    });
+    // Draw highlighted arrows last so they sit on top.
+    edges.sort(function (x, y) { return (/ (out|in)"/.test(x) ? 1 : 0) - (/ (out|in)"/.test(y) ? 1 : 0); });
+
+    var nodes = order.map(function (p) {
+      var o = pos[p.id], lines = labelLines(s, p), off = nodeR + gap, anchor, x, y0;
+      if (Math.abs(o.c) < 0.35) {
+        anchor = "middle"; x = o.x;
+        y0 = o.s < 0 ? o.y - off - (lines.length - 1) * lineH : o.y + off + fs * 0.8;
+      } else {
+        anchor = o.c > 0 ? "start" : "end";
+        x = o.x + (o.c > 0 ? off : -off);
+        y0 = o.y + fs * 0.35 - (lines.length - 1) * lineH / 2;
+      }
+      var r = byId(s, s.draw[p.id]);
+      var linked = lit && (lit.has(p.id) || lit.has(s.draw[p.id]) || Array.from(lit).some(function (lid) { return s.draw[lid] === p.id; }));
+      var cls = "node" + (graphFocus === p.id ? " sel" : "") + (lit && !linked ? " dim" : "");
+      var tspans = lines.map(function (t, i) {
+        return '<tspan x="' + x.toFixed(1) + '" y="' + (y0 + i * lineH).toFixed(1) + '"' + (i ? ' class="hh"' : "") + ">" + esc(t) + "</tspan>";
+      }).join("");
+      return '<g class="' + cls + '" data-node="' + p.id + '" tabindex="0" role="button" aria-pressed="' + (graphFocus === p.id) + '" aria-label="' +
+        esc(displayName(s, p) + " is buying for " + displayName(s, r)) + '">' +
+        '<circle class="hit" cx="' + o.x.toFixed(1) + '" cy="' + o.y.toFixed(1) + '" r="18"/>' +
+        '<circle class="dot" cx="' + o.x.toFixed(1) + '" cy="' + o.y.toFixed(1) + '" r="' + nodeR + '"/>' +
+        '<text text-anchor="' + anchor + '">' + tspans + "</text></g>";
+    }).join("");
+
+    var caption;
+    var focusP = graphFocus && byId(s, graphFocus);
+    var one = focusP || (lit && lit.size === 1 ? byId(s, Array.from(lit)[0]) : null);
+    if (one) {
+      var buysFor = byId(s, s.draw[one.id]);
+      var buyer = s.people.find(function (x) { return s.draw[x.id] === one.id; });
+      caption = "<strong>" + esc(displayName(s, one)) + "</strong> is buying for <strong>" + esc(displayName(s, buysFor)) +
+        "</strong>, and <strong>" + esc(displayName(s, buyer)) + "</strong> is buying for " + esc(displayName(s, one)) + ".";
+    } else if (lit && !lit.size) {
+      caption = '<span class="hint">No one on the list matches "' + esc(filter.trim()) + '".</span>';
+    } else {
+      caption = '<span class="hint">Each arrow points from a person to the one they are buying for. Tap a name to highlight it.</span>';
+    }
+
+    return '<div class="graph-wrap"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H +
+      '" style="--gfs:' + fs.toFixed(1) + 'px" role="group" aria-label="Matches arranged in a circle"><defs>' + defs + "</defs>" +
+      edges.join("") + nodes + '</svg><p class="graph-caption" aria-live="polite">' + caption + "</p></div>";
+  }
+
+  function syncMviewButtons() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mview]"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-mview") === matchView));
+    });
+  }
+
+  function renderEditMatches() {
+    var n = state.people.length, out = $("draw-out");
+    document.querySelector(".matches-bar .mview").classList.toggle("hidden", !state.draw);
+    $("pdf-row").classList.toggle("hidden", !state.draw);
+    syncMviewButtons();
+    if (!state.draw) {
+      out.innerHTML = '<p class="empty">' + (n < 2 ? "Add at least two people, then draw names." : "Ready when you are. Draw names to make the matches.") + "</p>";
+    } else if (matchView === "circle") {
+      out.innerHTML = graphHtml(state, out.clientWidth, "");
+    } else {
+      out.innerHTML = matchesHtml(state, "");
+    }
+    freshDraw = false;
+  }
+
+  function renderEdit() {
+    $("x-name").value = state.name;
+    $("x-date").value = state.date;
+    $("x-budget").value = state.budget;
+    $("x-note").value = state.note;
+    $("x-noswaps").checked = state.noSwaps;
+    document.title = (state.name ? state.name + " | " : "") + "Gift Exchange Mixer";
+
+    var n = state.people.length;
+    $("people-count").textContent = n ? "(" + n + ")" : "";
+    var people = state.people.slice().sort(peopleSort === "household" ? byHousehold : byName);
+    $("sorter").classList.toggle("hidden", n < 2);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-sort]"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-sort") === peopleSort));
+    });
+    $("people").innerHTML = n ? people.map(function (p) {
+      return '<li><div class="who" title="' + esc(p.name + (p.household ? ", " + p.household + " household" : "")) + '"><span class="pname">' + esc(p.name) + '</span>' +
+        (p.household ? '<span class="home">' + esc(p.household) + '<span class="home-word"> household</span></span>' : "") + '</div>' +
+        '<button class="link" data-edit="' + p.id + '">Edit</button>' +
+        '<button class="link" data-remove="' + p.id + '">Remove</button></li>';
+    }).join("") : '<li class="empty">Add everyone taking part. You need at least three people for a good mix.</li>';
+
+    var homes = Array.from(new Set(state.people.map(function (p) { return p.household; }).filter(Boolean))).sort();
+    $("homes").innerHTML = homes.map(function (h) { return '<option value="' + esc(h) + '">'; }).join("");
+
+    $("draw-btn").textContent = state.draw ? "Draw again" : "Draw names";
+    $("draw-btn").disabled = n < 2;
+    renderEditMatches();
+  }
+
+  function formatDate(iso) {
+    var p = iso.split("-").map(Number);
+    return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  }
+
+  function renderView() {
+    var s = viewState;
+    $("v-title").textContent = s.name || "Gift exchange";
+    document.title = (s.name || "Gift exchange") + " | View only";
+    var facts = "";
+    if (s.date) facts += "<dt>Date</dt><dd>" + esc(formatDate(s.date)) + "</dd>";
+    if (s.budget) facts += "<dt>Spending limit</dt><dd>" + esc(s.budget) + "</dd>";
+    facts += "<dt>People</dt><dd>" + s.people.length + "</dd>";
+    $("v-facts").innerHTML = facts;
+    $("v-note").textContent = s.note;
+    $("v-note").classList.toggle("hidden", !s.note);
+    $("v-search-wrap").classList.toggle("hidden", !s.draw);
+    $("v-mview-wrap").classList.toggle("hidden", !s.draw);
+    $("v-pdf-save").classList.toggle("hidden", !s.draw);
+    $("v-pdf-share").classList.toggle("hidden", !s.draw);
+    renderViewMatches();
+  }
+
+  function renderViewMatches() {
+    var s = viewState;
+    if (!s.draw) {
+      $("v-out").innerHTML = '<p class="empty">Names have not been drawn yet. Once the organizer draws, they will send a new link.</p>' +
+        (s.people.length ? '<p>Taking part: ' + s.people.slice().sort(byName).map(function (p) { return esc(displayName(s, p)); }).join(", ") + ".</p>" : "");
+      return;
+    }
+    syncMviewButtons();
+    $("v-out").innerHTML = matchView === "circle"
+      ? graphHtml(s, $("v-out").clientWidth, $("v-search").value)
+      : matchesHtml(s, $("v-search").value);
+  }
+
+  /* ---------- PDF of the match table ---------- */
+
+  var JSPDF_URL = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+  var jspdfPromise = null;
+  function loadJsPDF() {
+    if (window.jspdf) return Promise.resolve(window.jspdf);
+    if (!jspdfPromise) {
+      jspdfPromise = new Promise(function (resolve, reject) {
+        var sc = document.createElement("script");
+        sc.src = JSPDF_URL;
+        sc.onload = function () { window.jspdf ? resolve(window.jspdf) : reject(new Error("jsPDF missing")); };
+        sc.onerror = function () { jspdfPromise = null; sc.remove(); reject(new Error("load failed")); };
+        document.head.appendChild(sc);
+      });
+    }
+    return jspdfPromise;
+  }
+
+  function pdfFileName(s) {
+    var slug = (s.name || "gift-exchange").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "gift-exchange";
+    return slug + "-matches.pdf";
+  }
+
+  function buildPdf(lib, s) {
+    var doc = new lib.jsPDF({ unit: "pt", format: "letter" });
+    var pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
+    var m = 54, tableW = pageW - 2 * m, colW = tableW / 2, padX = 10, padY = 7, fs = 12, lh = fs * 1.25;
+    var y = m;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    var title = doc.splitTextToSize(s.name || "Gift exchange", tableW);
+    doc.text(title, m, y + 16);
+    y += 16 + (title.length - 1) * 24 + 10;
+    var facts = [];
+    if (s.date) facts.push("Date: " + formatDate(s.date));
+    if (s.budget) facts.push("Spending limit: " + s.budget);
+    if (facts.length) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(90);
+      facts.forEach(function (t) { y += 14; doc.text(t, m, y); });
+      doc.setTextColor(0);
+    }
+    y += 20;
+
+    function header() {
+      var h = lh + 2 * padY;
+      doc.setFillColor(225, 230, 240);
+      doc.setDrawColor(150);
+      doc.rect(m, y, tableW, h, "FD");
+      doc.line(m + colW, y, m + colW, y + h);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(fs);
+      doc.text("Name", m + padX, y + padY + fs * 0.9);
+      doc.text("Is buying for", m + colW + padX, y + padY + fs * 0.9);
+      y += h;
+    }
+    header();
+
+    s.people.slice().sort(byName).forEach(function (g, i) {
+      var r = byId(s, s.draw[g.id]);
+      doc.setFontSize(fs);
+      doc.setFont("helvetica", "normal");
+      var a = doc.splitTextToSize(displayName(s, g), colW - 2 * padX);
+      doc.setFont("helvetica", "bold");
+      var b = doc.splitTextToSize(displayName(s, r), colW - 2 * padX);
+      var h = Math.max(a.length, b.length) * lh + 2 * padY;
+      if (y + h > pageH - m) { doc.addPage(); y = m; header(); }
+      if (i % 2) { doc.setFillColor(244, 246, 250); doc.rect(m, y, tableW, h, "F"); }
+      doc.setDrawColor(150);
+      doc.rect(m, y, tableW, h);
+      doc.line(m + colW, y, m + colW, y + h);
+      doc.setFont("helvetica", "normal");
+      doc.text(a, m + padX, y + padY + fs * 0.9, { lineHeightFactor: 1.25 });
+      doc.setFont("helvetica", "bold");
+      doc.text(b, m + colW + padX, y + padY + fs * 0.9, { lineHeightFactor: 1.25 });
+      y += h;
+    });
+    return doc;
+  }
+
+  function currentExchange() { return viewState || state; }
+
+  function savePdf(lib) {
+    var s = currentExchange();
+    buildPdf(lib, s).save(pdfFileName(s));
+    toast("PDF saved.");
+  }
+
+  function sharePdf(lib) {
+    var s = currentExchange();
+    var name = pdfFileName(s);
+    var blob = buildPdf(lib, s).output("blob");
+    var file = null;
+    try { file = new File([blob], name, { type: "application/pdf" }); } catch (e) { file = null; }
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: (s.name || "Gift exchange") + " matches" }).catch(function (err) {
+        if (err && err.name === "AbortError") return;
+        buildPdf(lib, s).save(name);
+        toast("Sharing did not work here, so the PDF was saved instead.");
+      });
+    } else {
+      buildPdf(lib, s).save(name);
+      toast("This browser cannot share files, so the PDF was saved instead. You can attach it from your downloads.");
+    }
+  }
+
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-pdf]");
+    if (!b) return;
+    var s = currentExchange();
+    if (!s.draw) { toast("Draw names first."); return; }
+    var act = b.getAttribute("data-pdf") === "share" ? sharePdf : savePdf;
+    // Run right away when the library is ready, so sharing keeps the tap that started it.
+    if (window.jspdf) { act(window.jspdf); return; }
+    toast("Preparing the PDF...");
+    loadJsPDF().then(act, function () {
+      toast("Could not load the PDF maker. Check your connection and try again.");
+    });
+  });
+
+  function rerenderMatches() {
+    if (viewState) renderViewMatches(); else renderEditMatches();
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.remove("hidden");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.add("hidden"); }, 3800);
+  }
+
+  /* ---------- edit-mode events ---------- */
+
+  ["name", "date", "budget", "note"].forEach(function (key) {
+    $("x-" + key).addEventListener("input", function (ev) {
+      state[key] = ev.target.value;
+      if (key === "name") document.title = (state.name ? state.name + " | " : "") + "Gift Exchange Mixer";
+      saveLocal();
+    });
+  });
+
+  $("x-noswaps").addEventListener("change", function (ev) {
+    state.noSwaps = ev.target.checked;
+    if (state.draw && !drawIsValid(state, state.draw)) {
+      state.draw = null;
+      toast("The draw was cleared because it had swaps. Draw names again.");
+    }
+    saveLocal();
+    renderEdit();
+  });
+
+  function clearForm() {
+    editingId = null;
+    $("p-name").value = "";
+    $("p-home").value = "";
+    $("p-add").textContent = "Add";
+    $("p-cancel").classList.add("hidden");
+  }
+
+  function submitPerson() {
+    var name = $("p-name").value.trim().slice(0, 40);
+    var home = $("p-home").value.trim().slice(0, 40);
+    if (!name) { toast("Type a name first."); $("p-name").focus(); return; }
+    var sameName = state.people.filter(function (p) {
+      return p.id !== editingId && p.name.toLowerCase() === name.toLowerCase();
+    });
+    if (sameName.length) {
+      var homeLc = home.toLowerCase();
+      var sameHome = sameName.find(function (p) { return p.household.toLowerCase() === homeLc; });
+      if (home && sameHome) {
+        toast("There is already a " + name + " in the " + sameHome.household + " household. Add a last initial to tell them apart.");
+        return;
+      }
+      if (!home) {
+        toast("There is already a " + name + " on the list. Give this " + name + " a household so everyone can tell them apart.");
+        $("p-home").focus();
+        return;
+      }
+      var noHome = sameName.find(function (p) { return !p.household; });
+      if (noHome) {
+        toast("The other " + name + " has no household yet. Edit that " + name + " and add one first, so everyone can tell them apart.");
+        return;
+      }
+    }
+
+    if (editingId) {
+      var p = byId(state, editingId);
+      if (p) { p.name = name; p.household = home; }
+      if (state.draw && !drawIsValid(state, state.draw)) {
+        state.draw = null;
+        toast("The draw was cleared because two people in the same household were matched. Draw names again.");
+      }
+    } else {
+      if (state.draw && !confirm("Adding someone clears the current draw. Continue?")) return;
+      state.people.push({ id: uid(), name: name, household: home });
+      if (state.draw) { state.draw = null; toast("Draw cleared. Draw names again when everyone is added."); }
+    }
+    clearForm();
+    saveLocal();
+    renderEdit();
+    $("p-name").focus();
+  }
+
+  $("sorter").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-sort]");
+    if (!b) return;
+    peopleSort = b.getAttribute("data-sort");
+    try { localStorage.setItem(SORT_KEY, peopleSort); } catch (e) {}
+    renderEdit();
+  });
+
+  $("p-add").addEventListener("click", submitPerson);
+  ["p-name", "p-home"].forEach(function (id) {
+    $(id).addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); submitPerson(); } });
+  });
+  $("p-cancel").addEventListener("click", clearForm);
+
+  $("people").addEventListener("click", function (ev) {
+    var ed = ev.target.closest("[data-edit]");
+    var rm = ev.target.closest("[data-remove]");
+    if (ed) {
+      var p = byId(state, ed.getAttribute("data-edit"));
+      if (!p) return;
+      editingId = p.id;
+      $("p-name").value = p.name;
+      $("p-home").value = p.household;
+      $("p-add").textContent = "Save changes";
+      $("p-cancel").classList.remove("hidden");
+      $("p-name").focus();
+    } else if (rm) {
+      var target = byId(state, rm.getAttribute("data-remove"));
+      if (!target) return;
+      var msg = "Remove " + target.name + "?" + (state.draw ? " This also clears the current draw." : "");
+      if (!confirm(msg)) return;
+      state.people = state.people.filter(function (x) { return x.id !== target.id; });
+      if (editingId === target.id) clearForm();
+      state.draw = null;
+      saveLocal();
+      renderEdit();
+    }
+  });
+
+  $("draw-btn").addEventListener("click", function () {
+    if (state.draw && !confirm("Draw again? Everyone gets a new match, and any link you already sent will show the old matches.")) return;
+    var d = makeDraw(state);
+    if (!d) {
+      toast("No draw is possible with these rules. Spread people across more households or turn off Avoid swaps.");
+      return;
+    }
+    state.draw = d;
+    loadJsPDF().catch(function () {});
+    freshDraw = true;
+    graphFocus = null;
+    saveLocal();
+    renderEdit();
+    toast("Names drawn. Copy the share link to send it out.");
+  });
+
+  $("copy-link").addEventListener("click", function () {
+    if (!state.people.length) { toast("Add people before sharing."); return; }
+    if (!state.draw && !confirm("Names have not been drawn yet. Share the list anyway?")) return;
+    var url = shareUrl();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(
+        function () { toast("Share link copied."); },
+        function () { window.prompt("Copy this link:", url); }
+      );
+    } else {
+      window.prompt("Copy this link:", url);
+    }
+  });
+
+  $("preview-link").addEventListener("click", function () {
+    window.open(shareUrl(), "_blank", "noopener");
+  });
+
+  $("export").addEventListener("click", function () {
+    var slug = (state.name || "gift-exchange").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "gift-exchange";
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = slug + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    toast("Backup downloaded.");
+  });
+
+  $("import-btn").addEventListener("click", function () { $("import-file").click(); });
+  $("import-file").addEventListener("change", function (ev) {
+    var file = ev.target.files && ev.target.files[0];
+    ev.target.value = "";
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data = null;
+      try { data = normalize(JSON.parse(reader.result)); } catch (e) { data = null; }
+      if (!data) { toast("That file is not a gift exchange backup."); return; }
+      if (!isEmpty(state) && !confirm("Loading this backup replaces the exchange in this browser. Continue?")) return;
+      state = data;
+      clearForm();
+      saveLocal();
+      renderEdit();
+      toast("Backup loaded.");
+    };
+    reader.readAsText(file);
+  });
+
+  $("reset").addEventListener("click", function () {
+    if (!confirm("Start a new exchange? This clears everything in this browser. Download a backup first if you want to keep it.")) return;
+    state = blank();
+    clearForm();
+    saveLocal();
+    renderEdit();
+  });
+
+  /* ---------- view-mode events ---------- */
+
+  $("v-search").addEventListener("input", function () { graphFocus = null; renderViewMatches(); });
+
+  /* ---------- table or circle, shared by both pages ---------- */
+
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-mview]");
+    if (b) {
+      matchView = b.getAttribute("data-mview");
+      graphFocus = null;
+      try { localStorage.setItem(MVIEW_KEY, matchView); } catch (e) {}
+      rerenderMatches();
+      return;
+    }
+    var node = ev.target.closest("[data-node]");
+    if (node) {
+      var nid = node.getAttribute("data-node");
+      graphFocus = graphFocus === nid ? null : nid;
+      rerenderMatches();
+      var again = document.querySelector('#' + (viewState ? "v-out" : "draw-out") + ' [data-node="' + nid + '"]');
+      if (again) again.focus();
+    } else if (graphFocus && ev.target.closest(".graph-wrap")) {
+      graphFocus = null;
+      rerenderMatches();
+    }
+  });
+  document.addEventListener("keydown", function (ev) {
+    var node = ev.target.closest && ev.target.closest("[data-node]");
+    if (node && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); node.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
+  });
+
+  var resizeTimer = null, lastWidth = window.innerWidth;
+  window.addEventListener("resize", function () {
+    if (window.innerWidth === lastWidth || matchView !== "circle") return;
+    lastWidth = window.innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(rerenderMatches, 150);
+  });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { if (matchView === "circle") rerenderMatches(); });
+  }
+  $("v-print").addEventListener("click", function () { window.print(); });
+  $("v-copy").addEventListener("click", function () {
+    if (!viewState) return;
+    var msg = isEmpty(state)
+      ? "Make an editable copy in this browser? Your changes will not reach anyone else unless you send a new link."
+      : "Make an editable copy? This replaces the exchange already saved in this browser, and your changes will not reach anyone else unless you send a new link.";
+    if (!confirm(msg)) return;
+    state = viewState;
+    saveLocal();
+    clearForm();
+    history.replaceState(null, "", location.pathname + location.search);
+    route();
+    toast("Editable copy saved in this browser.");
+  });
+
+  window.addEventListener("hashchange", route);
+  route();
+  if ((viewState || state).draw) loadJsPDF().catch(function () {});
+})();
+</script>
+</body>
+</html>

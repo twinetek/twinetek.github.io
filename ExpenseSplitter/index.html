@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
 <style>
+/* =========================================================
+   1. Theme
+   ========================================================= */
 :root {
   --bg: #e9f0ee;
   --panel: #ffffff;
@@ -34,6 +37,10 @@
     --danger: #ff8a80;
   }
 }
+
+/* =========================================================
+   2. Base and layout
+   ========================================================= */
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -45,49 +52,32 @@ body {
   line-height: 1.45;
 }
 main { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; }
-h1, h2 { margin: 0; font-weight: 800; letter-spacing: -0.01em; }
-h2 { font-size: 1.25rem; margin-bottom: 12px; }
 section { margin-top: 28px; }
-.dlg-body .panel { border: 0; padding: 0; background: transparent; }
-.dlg-body section { margin-top: 0; }
+h2 { margin: 0 0 12px; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; }
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 16px;
 }
-.trip-name {
-  width: 100%;
-  border: 0;
-  border-bottom: 2px solid var(--line);
-  background: transparent;
-  color: var(--ink);
-  font: 800 2rem/1.15 var(--font);
-  letter-spacing: -0.02em;
-  padding: 4px 0 8px;
-  border-radius: 0;
-}
-.trip-name:focus { outline: none; border-bottom-color: var(--accent); }
-.total { color: var(--muted); margin: 8px 0 0; }
+.section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.section-head h2 { margin: 0; }
 
-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
-input[type=text], input[type=number], select {
-  width: 100%;
-  font: inherit;
-  color: var(--ink);
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 12px;
-  min-height: 44px;
+.empty { color: var(--muted); margin: 0; }
+.note { color: var(--muted); font-size: 0.9rem; margin: 10px 0 0; }
+.error { color: var(--danger); font-weight: 600; min-height: 1.4em; margin: 8px 0 0; }
+.pos { color: var(--accent); font-weight: 700; }
+.neg { color: var(--owe); font-weight: 700; }
+.hidden { display: none !important; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
 }
-input:focus-visible, select:focus-visible, button:focus-visible, .check:focus-within {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}
-.row { display: flex; gap: 10px; }
-.row > * { flex: 1; min-width: 0; }
-.field { margin-bottom: 14px; }
+
+/* =========================================================
+   3. Controls
+   ========================================================= */
 button {
   font: 600 0.95rem var(--font);
   min-height: 44px;
@@ -98,54 +88,147 @@ button {
   color: var(--ink);
   cursor: pointer;
 }
-button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:hover { filter: brightness(0.96); }
+button.primary,
+button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 button.danger { color: var(--danger); }
 button.small { min-height: 36px; padding: 0 12px; font-size: 0.85rem; }
-button:hover { filter: brightness(0.96); }
-
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--bg); border: 1px solid var(--line);
-  border-radius: 999px; padding: 4px 6px 4px 14px;
-}
-.chip button {
-  min-height: 28px; width: 28px; padding: 0; border-radius: 50%;
-  border: 0; background: transparent; color: var(--muted); font-size: 1.1rem; line-height: 1;
-}
-.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.check {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
-  padding: 10px 12px; min-height: 44px; font-weight: 500; font-size: 1rem; margin: 0; cursor: pointer;
-}
-.check input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
 .link-btn {
   background: none; border: 0; padding: 0; min-height: 0; color: var(--accent);
   text-decoration: underline; font-size: 0.85rem; font-weight: 600;
 }
+
+label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+input[type=text], input[type=number], select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+input:focus-visible, select:focus-visible, button:focus-visible, .check:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; min-width: 0; }
+.row > .grow-2 { flex: 2; }
+.row > .grow-3 { flex: 3; }
+.field { margin-bottom: 14px; }
+.actions { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+.tools { display: flex; gap: 10px; flex-wrap: wrap; }
 .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
 .label-row label { margin: 0; }
-.error { color: var(--danger); font-weight: 600; min-height: 1.4em; margin: 8px 0 0; }
-.actions { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
 
-.expense {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 0; border-top: 1px solid var(--line);
+/* =========================================================
+   4. Header and menu
+   ========================================================= */
+.top { display: flex; align-items: flex-start; gap: 12px; }
+.top .title { flex: 1; min-width: 0; }
+.trip-name {
+  width: 100%;
+  padding: 4px 0 8px;
+  border: 0;
+  border-bottom: 2px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 800 2rem/1.15 var(--font);
+  letter-spacing: -0.02em;
 }
+.trip-name:focus { outline: none; border-bottom-color: var(--accent); }
+.total { color: var(--muted); margin: 8px 0 0; }
+
+.menu-wrap { position: relative; flex: none; }
+.burger {
+  width: 48px; height: 48px; padding: 0; border-radius: 10px;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+}
+.burger span {
+  display: block; width: 22px; height: 2px; border-radius: 2px; background: var(--ink);
+  transition: transform 0.18s, opacity 0.18s;
+}
+.burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; min-width: 220px;
+  display: flex; flex-direction: column; padding: 6px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.menu button {
+  width: 100%; min-height: 48px; padding: 0 14px; border: 0; border-radius: 8px;
+  background: transparent; text-align: left; font-size: 1rem;
+}
+.menu button:hover, .menu button:focus-visible { background: var(--bg); filter: none; }
+
+/* =========================================================
+   5. Expense list
+   ========================================================= */
+.expense { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
 .expense:first-child { border-top: 0; padding-top: 0; }
 .expense:last-child { padding-bottom: 0; }
 .expense-main { flex: 1; min-width: 0; }
-.expense-desc { display: block; font-weight: 600; overflow-wrap: anywhere; line-height: 1.25; }
-.amount { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.meta { color: var(--muted); font-size: 0.85rem; margin-top: 1px; line-height: 1.25; overflow-wrap: anywhere; }
+.expense-desc { display: block; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.expense-meta { color: var(--muted); font-size: 0.85rem; line-height: 1.25; margin-top: 1px; overflow-wrap: anywhere; }
+.expense-amount { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .expense-btns { display: flex; gap: 6px; flex: none; }
 .expense-btns button { min-height: 36px; padding: 0 10px; font-size: 0.85rem; }
-@media (max-width: 420px) {
-  .expense { gap: 8px; }
-  .expense-btns button { padding: 0 8px; }
+
+/* =========================================================
+   6. Who shares what (swim lanes)
+   One row per expense, one column per person.
+   --label-w and --col-w set the column widths. A row's
+   connector line is positioned from --first, --last, --cols.
+   ========================================================= */
+.panel.lanes-panel { padding: 12px 8px; }
+.lanes { --label-w: 88px; --col-w: 56px; overflow-x: auto; }
+.lane-row { display: grid; position: relative; align-items: center; }
+.lane-head { padding-bottom: 6px; }
+.lane-person {
+  padding: 0 2px; text-align: center; font-weight: 700; font-size: 0.85rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lane-row.band { background: var(--bg); border-radius: 8px; }
+.lane-label { display: flex; flex-direction: column; min-width: 0; padding: 6px; }
+.lane-desc { font-weight: 600; font-size: 0.9rem; line-height: 1.2; overflow-wrap: anywhere; }
+.lane-sub { color: var(--muted); font-size: 0.75rem; line-height: 1.2; overflow-wrap: anywhere; }
+.lane-cell { display: flex; justify-content: center; align-items: center; min-width: 0; padding: 8px 0; }
+.lane-link {
+  position: absolute; top: 50%; height: 2px; transform: translateY(-1px);
+  background: var(--muted); opacity: 0.45;
+  left: calc(var(--label-w) + (100% - var(--label-w)) * (var(--first) + 0.5) / var(--cols));
+  width: calc((100% - var(--label-w)) * (var(--last) - var(--first)) / var(--cols));
+}
+.pill {
+  position: relative; z-index: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 28px; min-width: calc(var(--col-w) - 6px); padding: 0 4px; border-radius: 8px;
+  font-size: 0.78rem; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.pill.paid { background: var(--accent); color: var(--accent-ink); font-weight: 800; border: 1.5px solid var(--accent); }
+.pill.owes { background: var(--panel); color: var(--owe); font-weight: 600; border: 1.5px solid var(--owe); }
+.lane-total { border-top: 1px solid var(--line); }
+.lane-total.first { margin-top: 6px; padding-top: 4px; }
+.lane-total .lane-label { padding-top: 2px; padding-bottom: 2px; color: var(--muted); font-size: 0.85rem; font-weight: 600; }
+.lane-value { padding: 3px 0; text-align: center; font-size: 0.82rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lane-total.net .lane-value { font-weight: 800; }
+
+@media (min-width: 560px) {
+  .panel.lanes-panel { padding: 12px; }
+  .lanes { --label-w: 170px; --col-w: 84px; }
+  .pill { font-size: 0.9rem; padding: 0 8px; }
+  .lane-value { font-size: 0.95rem; }
 }
 
+/* =========================================================
+   7. Settle up
+   ========================================================= */
 .settle { list-style: none; margin: 0; padding: 0; }
 .settle li {
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
@@ -158,123 +241,95 @@ button:hover { filter: brightness(0.96); }
 .settle .amt { font-size: 1.5rem; font-weight: 800; color: var(--owe); font-variant-numeric: tabular-nums; }
 .settled { font-weight: 600; color: var(--accent); margin: 0; }
 
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-th, td { text-align: right; padding: 8px 6px; border-top: 1px solid var(--line); white-space: nowrap; }
-th:first-child, td:first-child { text-align: left; white-space: normal; overflow-wrap: anywhere; }
-thead th { border-top: 0; font-size: 0.85rem; color: var(--muted); font-weight: 600; }
-.pos { color: var(--accent); font-weight: 700; }
-.neg { color: var(--owe); font-weight: 700; }
+/* =========================================================
+   8. How it adds up (collapsible graph)
+   ========================================================= */
+.how > summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 44px; margin-bottom: 4px; list-style: none; cursor: pointer;
+}
+.how > summary::-webkit-details-marker { display: none; }
+.how > summary h2 { margin: 0; }
+.how > summary::after {
+  content: ""; flex: none; width: 10px; height: 10px; margin-right: 6px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg); transition: transform 0.15s;
+}
+.how[open] > summary::after { transform: rotate(-135deg); }
+.how > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 
-.empty { color: var(--muted); margin: 0; }
+.step-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.step-count { margin-left: auto; color: var(--muted); font-size: 0.85rem; }
+.graph svg { display: block; width: 100%; max-width: 460px; margin: 8px auto 0; }
+.graph-node { fill: var(--bg); stroke: var(--line); stroke-width: 1; }
+.graph-name { font: 800 14px var(--font); fill: var(--ink); }
+.graph-net { font: 500 12px var(--font); fill: var(--muted); }
+.graph-amount { font: 700 13px var(--font); fill: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* =========================================================
+   9. Dialogs and forms inside them
+   ========================================================= */
+dialog {
+  width: min(560px, calc(100% - 24px)); max-height: calc(100% - 24px);
+  margin: auto; padding: 0; overflow: auto;
+  background: var(--panel); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--radius);
+}
+dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
+.dlg-head {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+}
+.dlg-head h2 { margin: 0; }
+.dlg-close { width: 44px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 1.4rem; line-height: 1; }
+.dlg-body { padding: 16px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 14px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+}
+.chip button {
+  width: 28px; min-height: 28px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; color: var(--muted); font-size: 1.1rem; line-height: 1;
+}
+.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.check {
+  display: flex; align-items: center; gap: 8px; min-height: 44px; margin: 0; padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  font-weight: 500; font-size: 1rem; cursor: pointer;
+}
+.check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+
+/* =========================================================
+   10. Shared-link banner and toast
+   ========================================================= */
 .banner {
+  margin-bottom: 20px; padding: 14px 16px;
   background: var(--panel); border: 2px solid var(--accent); border-radius: var(--radius);
-  padding: 14px 16px; margin-bottom: 20px;
 }
 .banner p { margin: 0 0 10px; }
 .toast {
   position: fixed; z-index: 100; left: 50%; bottom: 20px; transform: translateX(-50%);
-  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px;
-  font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.2s; max-width: calc(100% - 32px);
+  max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 8px;
+  background: var(--ink); color: var(--bg); font-weight: 600;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
 }
+.toast[popover] { inset: auto; left: 50%; bottom: 20px; margin: 0; border: 0; overflow: visible; }
 .toast.show { opacity: 1; }
-.hidden { display: none !important; }
-.tools { display: flex; gap: 10px; flex-wrap: wrap; }
-.note { color: var(--muted); font-size: 0.9rem; margin: 10px 0 0; }
 
-.sec-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
-.sec-head h2 { margin: 0; }
-
-.how > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; min-height: 44px; margin-bottom: 4px; }
-.how > summary::-webkit-details-marker { display: none; }
-.how > summary h2 { margin: 0; }
-.how > summary::after { content: ""; flex: none; width: 10px; height: 10px; margin-right: 6px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform 0.15s; }
-.how[open] > summary::after { transform: rotate(-135deg); }
-.how > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-@media (prefers-reduced-motion: reduce) { .how > summary::after { transition: none; } }
-
-/* swim-lane grid */
-.panel.flush { padding: 12px 8px; }
-.g-scroll { --lw: 88px; --cw: 56px; overflow-x: auto; }
-@media (min-width: 560px) { .g-scroll { --lw: 170px; --cw: 84px; } .panel.flush { padding: 12px; } }
-.g-row { display: grid; position: relative; align-items: center; }
-.g-head { padding-bottom: 6px; }
-.g-person { text-align: center; font-weight: 700; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px; }
-.g-exp.band { background: var(--bg); border-radius: 8px; }
-.g-label { display: flex; flex-direction: column; min-width: 0; padding: 6px 6px 6px 6px; }
-.g-desc { font-weight: 600; font-size: 0.9rem; line-height: 1.2; overflow-wrap: anywhere; }
-.g-sub { color: var(--muted); font-size: 0.75rem; line-height: 1.2; overflow-wrap: anywhere; }
-.g-cell { display: flex; justify-content: center; align-items: center; padding: 8px 0; min-width: 0; }
-.g-line {
-  position: absolute; top: 50%; height: 2px; transform: translateY(-1px); background: var(--muted); opacity: 0.45;
-  left: calc(var(--lw) + (100% - var(--lw)) * (var(--min) + 0.5) / var(--n));
-  width: calc((100% - var(--lw)) * (var(--max) - var(--min)) / var(--n));
-}
-.pill {
-  position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center;
-  min-height: 28px; padding: 0 4px; border-radius: 8px; font-size: 0.78rem; white-space: nowrap;
-  font-variant-numeric: tabular-nums; min-width: calc(var(--cw) - 6px);
-}
-@media (min-width: 560px) { .pill { font-size: 0.9rem; padding: 0 8px; } }
-.pill.paid { background: var(--accent); color: var(--accent-ink); font-weight: 800; border: 1.5px solid var(--accent); }
-.pill.owes { background: var(--panel); color: var(--owe); font-weight: 600; border: 1.5px solid var(--owe); }
-.g-foot { border-top: 1px solid var(--line); }
-.g-foot.first { margin-top: 6px; padding-top: 4px; }
-.g-foot .g-label { padding-top: 2px; padding-bottom: 2px; color: var(--muted); font-size: 0.85rem; font-weight: 600; }
-.g-val { text-align: center; font-variant-numeric: tabular-nums; font-size: 0.82rem; padding: 3px 0; white-space: nowrap; }
-@media (min-width: 560px) { .g-val { font-size: 0.95rem; } }
-.g-foot.net .g-val { font-weight: 800; }
-
-/* settlement graph */
-.seg { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.seg .cap { margin-left: auto; color: var(--muted); font-size: 0.85rem; }
-button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.graph svg { display: block; width: 100%; max-width: 460px; margin: 8px auto 0; }
-.g-node { fill: var(--bg); stroke: var(--line); stroke-width: 1; }
-.g-name { font: 800 14px var(--font); fill: var(--ink); }
-.g-net { font: 500 12px var(--font); fill: var(--muted); }
-.g-amt { font: 700 13px var(--font); fill: var(--ink); font-variant-numeric: tabular-nums; }
-
-/* header + menu */
-.top { display: flex; align-items: flex-start; gap: 12px; }
-.top .title { flex: 1; min-width: 0; }
-.menu-wrap { position: relative; flex: none; }
-.burger {
-  width: 48px; height: 48px; padding: 0; display: inline-flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 5px; border-radius: 10px;
-}
-.burger span { display: block; width: 22px; height: 2px; background: var(--ink); border-radius: 2px; transition: transform 0.18s, opacity 0.18s; }
-.burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
-.burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-.menu {
-  position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; min-width: 220px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.18); padding: 6px; display: flex; flex-direction: column;
-}
-.menu button {
-  text-align: left; border: 0; background: transparent; min-height: 48px; padding: 0 14px;
-  font-size: 1rem; border-radius: 8px; width: 100%;
-}
-.menu button:hover, .menu button:focus-visible { background: var(--bg); filter: none; }
-
-/* dialogs */
-dialog {
-  width: min(560px, calc(100% - 24px)); max-height: calc(100% - 24px);
-  background: var(--panel); color: var(--ink); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 0; overflow: auto; margin: auto;
-}
-dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
-.dlg-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 14px 16px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); z-index: 1;
-}
-.dlg-head h2 { margin: 0; }
-.dlg-close { width: 44px; padding: 0; font-size: 1.4rem; line-height: 1; border: 0; background: transparent; color: var(--muted); }
-.dlg-body { padding: 16px; }
-.toast[popover] { inset: auto; left: 50%; bottom: 20px; margin: 0; border: 0; transform: translateX(-50%); overflow: visible; }
-@media (prefers-reduced-motion: reduce) { .toast, .burger span { transition: none; } }
+/* =========================================================
+   11. Small screens and reduced motion
+   ========================================================= */
 @media (max-width: 480px) { .row.stack-sm { flex-direction: column; } }
+@media (max-width: 420px) {
+  .expense { gap: 8px; }
+  .expense-btns button { padding: 0 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast, .burger span, .how > summary::after { transition: none; }
+}
 </style>
 </head>
 <body>
@@ -282,14 +337,14 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
   <div id="banner" class="banner hidden" role="region" aria-label="Shared trip">
     <p>This link contains a shared trip. Loading it replaces the trip saved in this browser.</p>
     <div class="actions">
-      <button class="primary" id="banner-load">Load shared trip</button>
-      <button id="banner-keep">Keep my trip</button>
+      <button type="button" class="primary" id="banner-load">Load shared trip</button>
+      <button type="button" id="banner-keep">Keep my trip</button>
     </div>
   </div>
 
   <header class="top">
     <div class="title">
-      <label for="trip-name" class="hidden">Trip name</label>
+      <label for="trip-name" class="sr-only">Trip name</label>
       <input id="trip-name" class="trip-name" type="text" placeholder="Name this trip" maxlength="80" autocomplete="off">
       <p class="total" id="total"></p>
     </div>
@@ -304,17 +359,17 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     </div>
   </header>
 
-  <section aria-labelledby="h-list">
-    <div class="sec-head">
-      <h2 id="h-list">Expenses</h2>
-      <button type="button" class="primary small" data-open-from-empty="dlg-expense" aria-label="Add an expense">Add</button>
+  <section aria-labelledby="h-expenses">
+    <div class="section-head">
+      <h2 id="h-expenses">Expenses</h2>
+      <button type="button" class="primary small" data-open="dlg-expense" aria-label="Add an expense">Add</button>
     </div>
     <div class="panel" id="expenses"></div>
   </section>
 
-  <section aria-labelledby="h-grid">
-    <h2 id="h-grid">Who shares what</h2>
-    <div class="panel flush" id="grid"></div>
+  <section aria-labelledby="h-lanes">
+    <h2 id="h-lanes">Who shares what</h2>
+    <div class="panel lanes-panel" id="lanes"></div>
   </section>
 
   <section aria-labelledby="h-settle">
@@ -331,14 +386,17 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
 </main>
 
 <dialog id="dlg-people" aria-labelledby="h-people">
-  <div class="dlg-head"><h2 id="h-people">Manage people</h2><button type="button" class="dlg-close" data-close aria-label="Close">&times;</button></div>
+  <div class="dlg-head">
+    <h2 id="h-people">Manage people</h2>
+    <button type="button" class="dlg-close" data-close aria-label="Close">&times;</button>
+  </div>
   <div class="dlg-body">
     <form id="person-form" class="row" autocomplete="off">
-      <div style="flex: 3">
-        <label for="person-name" class="hidden">Name</label>
+      <div class="grow-3">
+        <label for="person-name" class="sr-only">Name</label>
         <input id="person-name" type="text" placeholder="Add a person" maxlength="40">
       </div>
-      <button class="primary" type="submit" style="flex: 1">Add</button>
+      <button type="submit" class="primary">Add</button>
     </form>
     <p class="error" id="person-error" role="alert"></p>
     <div class="chips" id="people"></div>
@@ -346,10 +404,13 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
 </dialog>
 
 <dialog id="dlg-expense" aria-labelledby="h-expense">
-  <div class="dlg-head"><h2 id="h-expense">Add an expense</h2><button type="button" class="dlg-close" data-close aria-label="Close">&times;</button></div>
+  <div class="dlg-head">
+    <h2 id="h-expense">Add an expense</h2>
+    <button type="button" class="dlg-close" data-close aria-label="Close">&times;</button>
+  </div>
   <form class="dlg-body" id="expense-form" autocomplete="off" novalidate>
     <div class="row stack-sm">
-      <div class="field" style="flex: 2">
+      <div class="field grow-2">
         <label for="e-desc">What was it for?</label>
         <input id="e-desc" type="text" placeholder="Car rental" maxlength="80">
       </div>
@@ -366,674 +427,906 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       <div class="label-row">
         <label id="split-label">Split between</label>
         <span>
-          <button type="button" class="link-btn" id="sel-all">Everyone</button>
-          <button type="button" class="link-btn" id="sel-none">None</button>
+          <button type="button" class="link-btn" id="split-all">Everyone</button>
+          <button type="button" class="link-btn" id="split-none">None</button>
         </span>
       </div>
-      <div class="checks" id="e-parts" role="group" aria-labelledby="split-label"></div>
+      <div class="checks" id="e-split" role="group" aria-labelledby="split-label"></div>
     </div>
     <p class="error" id="e-error" role="alert"></p>
     <div class="actions">
-      <button class="primary" type="submit" id="e-submit">Add expense</button>
+      <button type="submit" class="primary" id="e-submit">Add expense</button>
       <button type="button" id="e-cancel" class="hidden">Cancel edit</button>
     </div>
   </form>
 </dialog>
 
 <dialog id="dlg-data" aria-labelledby="h-data">
-  <div class="dlg-head"><h2 id="h-data">Save and share</h2><button type="button" class="dlg-close" data-close aria-label="Close">&times;</button></div>
+  <div class="dlg-head">
+    <h2 id="h-data">Save and share</h2>
+    <button type="button" class="dlg-close" data-close aria-label="Close">&times;</button>
+  </div>
   <div class="dlg-body">
     <div class="tools">
-      <button id="copy-link">Copy share link</button>
-      <button id="export">Download backup</button>
-      <button id="import-btn">Load backup</button>
-      <button id="reset" class="danger">Start a new trip</button>
+      <button type="button" id="copy-link">Copy share link</button>
+      <button type="button" id="export">Download backup</button>
+      <button type="button" id="import-btn">Load backup</button>
+      <button type="button" id="reset" class="danger">Start a new trip</button>
     </div>
     <input type="file" id="import-file" accept="application/json,.json" class="hidden">
     <p class="note">Your trip is saved automatically in this browser. The share link holds the whole trip in the link itself, so anyone with the link can see it. Sharing does not sync: to pass on changes, send a new link or backup.</p>
   </div>
 </dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite" popover="manual"></div>
 
 <script>
-(function () {
+(() => {
   "use strict";
 
-  var STORAGE_KEY = "tripsplit.v1";
-  var HASH_PREFIX = "#t=";
+  /* =========================================================
+     Helpers
+     ========================================================= */
 
-  var state = loadLocal() || blank();
-  var draftParts = new Set(state.people.map(function (p) { return p.id; }));
-  var editingId = null;
-  var pendingShared = null;
+  const STORAGE_KEY = "tripsplit.v1";
+  const SHARE_PREFIX = "#t=";
 
-  var $ = function (id) { return document.getElementById(id); };
+  const $ = (id) => document.getElementById(id);
+  const sum = (numbers) => numbers.reduce((total, n) => total + n, 0);
+  const newId = () => Math.random().toString(36).slice(2, 10);
+  const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
 
-  function blank() { return { name: "", people: [], expenses: [] }; }
-  function uid() { return Math.random().toString(36).slice(2, 10); }
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-  var money = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" });
-  function fmt(cents) { return money.format(cents / 100); }
-  function personName(id) {
-    var p = state.people.find(function (x) { return x.id === id; });
-    return p ? p.name : "Unknown";
-  }
+  const currency = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" });
+  /** All money is stored as whole cents. */
+  const fmt = (cents) => currency.format(cents / 100);
+  const fmtSigned = (cents) => (cents > 0 ? "+" : "") + fmt(cents);
 
-  /* ---------- storage ---------- */
+  const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  /** Escapes text before it goes into an HTML string. */
+  const esc = (value) => String(value).replace(/[&<>"']/g, (c) => ESCAPES[c]);
 
-  function normalize(raw) {
+  /* =========================================================
+     State
+     ========================================================= */
+
+  const blankTrip = () => ({ name: "", people: [], expenses: [] });
+
+  let trip = loadTrip() || blankTrip();
+
+  /** Things that belong to the screen, not to the saved trip. */
+  const ui = {
+    editingId: null,          // expense being edited, or null when adding
+    splitWith: new Set(),     // people ticked in the expense form
+    graphStep: 1,             // 1 every debt, 2 netted by pair, 3 fewest payments
+    pendingShared: null       // trip from a share link, waiting for confirmation
+  };
+
+  const allPeopleIds = () => trip.people.map((p) => p.id);
+  const personName = (id) => trip.people.find((p) => p.id === id)?.name ?? "Unknown";
+  const isEmptyTrip = (t) => !t.name && !t.people.length && !t.expenses.length;
+
+  /* =========================================================
+     Saving and loading
+     ========================================================= */
+
+  /** Checks and cleans a trip from storage, a backup, or a link. Returns null if unusable. */
+  function normalizeTrip(raw) {
     if (!raw || typeof raw !== "object" || !Array.isArray(raw.people) || !Array.isArray(raw.expenses)) return null;
-    var people = [];
-    raw.people.forEach(function (p) {
-      if (p && typeof p.id === "string" && typeof p.name === "string" && p.name.trim()) {
-        people.push({ id: p.id, name: p.name.trim().slice(0, 40) });
-      }
-    });
-    var ids = new Set(people.map(function (p) { return p.id; }));
-    var expenses = [];
-    raw.expenses.forEach(function (e) {
-      if (!e || typeof e.id !== "string" || !ids.has(e.paidBy)) return;
-      var amount = Math.round(Number(e.amount));
-      if (!isFinite(amount) || amount < 0) return;
-      var parts = Array.isArray(e.participants) ? e.participants.filter(function (id) { return ids.has(id); }) : [];
-      if (!parts.length) return;
+
+    const people = raw.people
+      .filter((p) => p && typeof p.id === "string" && typeof p.name === "string" && p.name.trim())
+      .map((p) => ({ id: p.id, name: p.name.trim().slice(0, 40) }));
+    const ids = new Set(people.map((p) => p.id));
+
+    const expenses = [];
+    for (const e of raw.expenses) {
+      if (!e || typeof e.id !== "string" || !ids.has(e.paidBy)) continue;
+      const amount = Math.round(Number(e.amount));
+      if (!Number.isFinite(amount) || amount < 0) continue;
+      const participants = Array.isArray(e.participants) ? e.participants.filter((id) => ids.has(id)) : [];
+      if (!participants.length) continue;
       expenses.push({
         id: e.id,
         desc: String(e.desc || "Expense").slice(0, 80),
-        amount: amount,
+        amount,
         paidBy: e.paidBy,
-        participants: parts
+        participants
       });
-    });
-    return { name: String(raw.name || "").slice(0, 80), people: people, expenses: expenses };
+    }
+
+    return { name: String(raw.name || "").slice(0, 80), people, expenses };
   }
 
-  function loadLocal() {
+  function loadTrip() {
     try {
-      var s = localStorage.getItem(STORAGE_KEY);
-      return s ? normalize(JSON.parse(s)) : null;
-    } catch (e) { return null; }
-  }
-  function saveLocal() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (e) { toast("Could not save in this browser. Download a backup to be safe."); }
-  }
-  function isEmpty(s) { return !s.name && !s.people.length && !s.expenses.length; }
-
-  /* ---------- share link ---------- */
-
-  function encodeState(s) {
-    var bytes = new TextEncoder().encode(JSON.stringify(s));
-    var bin = "";
-    bytes.forEach(function (b) { bin += String.fromCharCode(b); });
-    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  }
-  function decodeState(str) {
-    var b64 = str.replace(/-/g, "+").replace(/_/g, "/");
-    while (b64.length % 4) b64 += "=";
-    var bin = atob(b64);
-    var bytes = new Uint8Array(bin.length);
-    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return normalize(JSON.parse(new TextDecoder().decode(bytes)));
-  }
-  function checkHash() {
-    if (location.hash.indexOf(HASH_PREFIX) !== 0) return;
-    var shared = null;
-    try { shared = decodeState(location.hash.slice(HASH_PREFIX.length)); } catch (e) { shared = null; }
-    history.replaceState(null, "", location.pathname + location.search);
-    if (!shared) { toast("That share link could not be read."); return; }
-    if (isEmpty(state)) { adopt(shared); toast("Shared trip loaded."); return; }
-    pendingShared = shared;
-    $("banner").classList.remove("hidden");
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? normalizeTrip(JSON.parse(saved)) : null;
+    } catch {
+      return null;
+    }
   }
 
-  function adopt(s) {
-    state = s;
-    draftParts = new Set(state.people.map(function (p) { return p.id; }));
-    editingId = null;
-    clearForm();
-    saveLocal();
+  function saveTrip() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(trip));
+    } catch {
+      toast("Could not save in this browser. Download a backup to be safe.");
+    }
+  }
+
+  /** Saves the trip and redraws the page. Call after any change. */
+  function commit() {
+    saveTrip();
     render();
   }
 
-  /* ---------- math (integer cents) ---------- */
-
-  function shares(e) {
-    var ids = state.people.filter(function (p) { return e.participants.indexOf(p.id) !== -1; })
-                          .map(function (p) { return p.id; });
-    var out = {};
-    if (!ids.length) return out;
-    var base = Math.floor(e.amount / ids.length);
-    var rem = e.amount - base * ids.length;
-    ids.forEach(function (id) {
-      out[id] = base + (rem > 0 ? 1 : 0);
-      if (rem > 0) rem--;
-    });
-    return out;
+  /** Swaps in a whole new trip (backup, share link, or reset). */
+  function replaceTrip(next) {
+    trip = next;
+    resetExpenseForm();
+    commit();
   }
 
-  function compute() {
-    var paid = {}, owed = {};
-    state.people.forEach(function (p) { paid[p.id] = 0; owed[p.id] = 0; });
-    state.expenses.forEach(function (e) {
-      var sh = shares(e), ids = Object.keys(sh);
-      if (!ids.length) return;
-      paid[e.paidBy] += e.amount;
-      ids.forEach(function (id) { owed[id] += sh[id]; });
-    });
-    var net = {};
-    state.people.forEach(function (p) { net[p.id] = paid[p.id] - owed[p.id]; });
-    return { paid: paid, owed: owed, net: net };
+  /* =========================================================
+     Share links
+     The whole trip is encoded into the URL hash as base64url JSON.
+     ========================================================= */
+
+  function encodeTrip(t) {
+    const bytes = new TextEncoder().encode(JSON.stringify(t));
+    let binary = "";
+    bytes.forEach((b) => { binary += String.fromCharCode(b); });
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
 
-  function settle(net) {
-    var debtors = [], creditors = [], out = [];
-    state.people.forEach(function (p) {
-      var v = net[p.id];
-      if (v < 0) debtors.push({ id: p.id, v: -v });
-      else if (v > 0) creditors.push({ id: p.id, v: v });
-    });
-    while (debtors.length && creditors.length) {
-      debtors.sort(function (a, b) { return b.v - a.v; });
-      creditors.sort(function (a, b) { return b.v - a.v; });
-      var d = debtors[0], c = creditors[0];
-      var amt = Math.min(d.v, c.v);
-      out.push({ from: d.id, to: c.id, amt: amt });
-      d.v -= amt; c.v -= amt;
-      if (d.v === 0) debtors.shift();
-      if (c.v === 0) creditors.shift();
+  function decodeTrip(text) {
+    let b64 = text.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    return normalizeTrip(JSON.parse(new TextDecoder().decode(bytes)));
+  }
+
+  function readShareLink() {
+    if (!location.hash.startsWith(SHARE_PREFIX)) return;
+
+    let shared = null;
+    try { shared = decodeTrip(location.hash.slice(SHARE_PREFIX.length)); } catch { shared = null; }
+    history.replaceState(null, "", location.pathname + location.search);
+
+    if (!shared) { toast("That share link could not be read."); return; }
+    if (isEmptyTrip(trip)) { replaceTrip(shared); toast("Shared trip loaded."); return; }
+
+    ui.pendingShared = shared;
+    $("banner").classList.remove("hidden");
+  }
+
+  function hideBanner() {
+    ui.pendingShared = null;
+    $("banner").classList.add("hidden");
+  }
+
+  /* =========================================================
+     Money math
+     ========================================================= */
+
+  /**
+   * Splits one expense into whole-cent shares, keyed by person id.
+   * Leftover cents go to the first people in list order.
+   */
+  function splitExpense(expense) {
+    const ids = trip.people.filter((p) => expense.participants.includes(p.id)).map((p) => p.id);
+    const shares = {};
+    if (!ids.length) return shares;
+
+    const base = Math.floor(expense.amount / ids.length);
+    let leftover = expense.amount - base * ids.length;
+    for (const id of ids) {
+      shares[id] = base + (leftover > 0 ? 1 : 0);
+      if (leftover > 0) leftover--;
     }
-    return out;
+    return shares;
   }
 
-  /* ---------- rendering ---------- */
+  /** Totals per person: what they paid, their share, and the difference. */
+  function summarize() {
+    const paid = {}, owed = {}, net = {};
+    for (const p of trip.people) { paid[p.id] = 0; owed[p.id] = 0; }
+
+    for (const e of trip.expenses) {
+      const shares = splitExpense(e);
+      const ids = Object.keys(shares);
+      if (!ids.length) continue;
+      paid[e.paidBy] += e.amount;
+      for (const id of ids) owed[id] += shares[id];
+    }
+
+    for (const p of trip.people) net[p.id] = paid[p.id] - owed[p.id];
+    return { paid, owed, net };
+  }
+
+  /** Repeatedly matches the biggest debtor with the biggest creditor. */
+  function fewestPayments(net) {
+    const debtors = [], creditors = [], payments = [];
+    for (const p of trip.people) {
+      const balance = net[p.id];
+      if (balance < 0) debtors.push({ id: p.id, left: -balance });
+      else if (balance > 0) creditors.push({ id: p.id, left: balance });
+    }
+
+    const biggestFirst = (a, b) => b.left - a.left;
+    while (debtors.length && creditors.length) {
+      debtors.sort(biggestFirst);
+      creditors.sort(biggestFirst);
+      const debtor = debtors[0], creditor = creditors[0];
+      const amount = Math.min(debtor.left, creditor.left);
+      payments.push({ from: debtor.id, to: creditor.id, amount });
+      debtor.left -= amount;
+      creditor.left -= amount;
+      if (debtor.left === 0) debtors.shift();
+      if (creditor.left === 0) creditors.shift();
+    }
+    return payments;
+  }
+
+  /** debts[from][to] is a list of shares `from` owes `to`, one per expense. */
+  function debtsByPair() {
+    const debts = {};
+    for (const e of trip.expenses) {
+      const shares = splitExpense(e);
+      for (const id of Object.keys(shares)) {
+        if (id === e.paidBy) continue;
+        debts[id] = debts[id] || {};
+        (debts[id][e.paidBy] = debts[id][e.paidBy] || []).push(shares[id]);
+      }
+    }
+    return debts;
+  }
+
+  /* =========================================================
+     Rendering
+     ========================================================= */
 
   function render() {
-    $("trip-name").value = state.name;
+    const summary = summarize();
+    renderHeader();
     renderPeople();
-    renderForm();
-    renderExpenses();
-    renderResults();
+    renderExpenseForm();
+    renderExpenseList();
+    renderLanes(summary);
+    renderSettle(summary);
+    renderGraph(summary);
+  }
+
+  function renderHeader() {
+    $("trip-name").value = trip.name;
+    const count = trip.expenses.length;
+    const total = sum(trip.expenses.map((e) => e.amount));
+    $("total").textContent = count ? `${plural(count, "expense", "expenses")}, ${fmt(total)} in total` : "";
   }
 
   function renderPeople() {
-    var el = $("people");
-    if (!state.people.length) { el.innerHTML = '<p class="empty">Add everyone on the trip to get started.</p>'; return; }
-    el.innerHTML = state.people.map(function (p) {
-      return '<span class="chip">' + esc(p.name) +
-        '<button type="button" data-remove-person="' + esc(p.id) + '" aria-label="Remove ' + esc(p.name) + '">&times;</button></span>';
-    }).join("");
+    const el = $("people");
+    if (!trip.people.length) {
+      el.innerHTML = '<p class="empty">Add everyone on the trip to get started.</p>';
+      return;
+    }
+    el.innerHTML = trip.people.map((p) => `
+      <span class="chip">${esc(p.name)}<button type="button" data-remove-person="${esc(p.id)}" aria-label="Remove ${esc(p.name)}">&times;</button></span>`
+    ).join("");
   }
 
-  function renderForm() {
-    var sel = $("e-paid");
-    var current = sel.value;
-    sel.innerHTML = state.people.map(function (p) {
-      return '<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>';
-    }).join("");
-    if (state.people.some(function (p) { return p.id === current; })) sel.value = current;
+  function renderExpenseForm() {
+    const payer = $("e-paid");
+    const previous = payer.value;
+    payer.innerHTML = trip.people.map((p) => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+    if (trip.people.some((p) => p.id === previous)) payer.value = previous;
 
-    $("e-parts").innerHTML = state.people.map(function (p) {
-      return '<label class="check"><input type="checkbox" data-part="' + esc(p.id) + '"' +
-        (draftParts.has(p.id) ? " checked" : "") + '> ' + esc(p.name) + '</label>';
-    }).join("") || '<p class="empty">Add people first.</p>';
+    $("e-split").innerHTML = trip.people.map((p) => `
+      <label class="check"><input type="checkbox" data-split="${esc(p.id)}"${ui.splitWith.has(p.id) ? " checked" : ""}> ${esc(p.name)}</label>`
+    ).join("") || '<p class="empty">Add people first.</p>';
 
-    $("e-submit").textContent = editingId ? "Save changes" : "Add expense";
-    $("h-expense").textContent = editingId ? "Edit expense" : "Add an expense";
-    $("e-cancel").classList.toggle("hidden", !editingId);
+    const editing = Boolean(ui.editingId);
+    $("h-expense").textContent = editing ? "Edit expense" : "Add an expense";
+    $("e-submit").textContent = editing ? "Save changes" : "Add expense";
+    $("e-cancel").classList.toggle("hidden", !editing);
   }
 
-  function renderExpenses() {
-    var el = $("expenses");
-    if (!state.expenses.length) { el.innerHTML = '<p class="empty">No expenses yet. ' + (state.people.length
-        ? '<button type="button" class="link-btn" data-open-from-empty="dlg-expense">Add an expense</button>'
-        : '<button type="button" class="link-btn" data-open-from-empty="dlg-people">Add the people on this trip</button> first.') + '</p>'; return; }
-    el.innerHTML = state.expenses.map(function (e) {
-      var names = state.people.filter(function (p) { return e.participants.indexOf(p.id) !== -1; })
-                              .map(function (p) { return p.name; });
-      var split = names.length === state.people.length ? "everyone" : names.join(", ");
-      return '<div class="expense">' +
-        '<div class="expense-main"><span class="expense-desc">' + esc(e.desc) + '</span>' +
-        '<div class="meta">' + esc(personName(e.paidBy)) + ' paid, split: ' + esc(split) + '</div></div>' +
-        '<span class="amount">' + fmt(e.amount) + '</span>' +
-        '<div class="expense-btns">' +
-        '<button class="small" data-edit="' + esc(e.id) + '" aria-label="Edit ' + esc(e.desc) + '">Edit</button>' +
-        '<button class="small danger" data-delete="' + esc(e.id) + '" aria-label="Delete ' + esc(e.desc) + '">Delete</button></div></div>';
-    }).join("");
-  }
-
-  function renderResults() {
-    var total = state.expenses.reduce(function (s, e) { return s + e.amount; }, 0);
-    $("total").textContent = state.expenses.length
-      ? state.expenses.length + (state.expenses.length === 1 ? " expense, " : " expenses, ") + fmt(total) + " in total"
-      : "";
-
-    var r = compute();
-    var transfers = settle(r.net);
-    var settleEl = $("settle");
-    if (!state.expenses.length) {
-      settleEl.innerHTML = '<p class="empty">Add an expense and the payments needed to even things out will show here.</p>';
-    } else if (!transfers.length) {
-      settleEl.innerHTML = '<p class="settled">Everyone is even.</p>';
-    } else {
-      settleEl.innerHTML = '<ul class="settle">' + transfers.map(function (t) {
-        return '<li><span class="who"><b>' + esc(personName(t.from)) + '</b> pays <b>' + esc(personName(t.to)) + '</b></span>' +
-          '<span class="amt">' + fmt(t.amt) + '</span></li>';
-      }).join("") + '</ul>';
+  function renderExpenseList() {
+    const el = $("expenses");
+    if (!trip.expenses.length) {
+      const next = trip.people.length
+        ? '<button type="button" class="link-btn" data-open="dlg-expense">Add an expense</button>'
+        : '<button type="button" class="link-btn" data-open="dlg-people">Add the people on this trip</button> first.';
+      el.innerHTML = `<p class="empty">No expenses yet. ${next}</p>`;
+      return;
     }
 
-    renderGrid(r);
-    renderGraph(r);
+    el.innerHTML = trip.expenses.map((e) => {
+      const names = trip.people.filter((p) => e.participants.includes(p.id)).map((p) => p.name);
+      const split = names.length === trip.people.length ? "everyone" : names.join(", ");
+      return `
+        <div class="expense">
+          <div class="expense-main">
+            <span class="expense-desc">${esc(e.desc)}</span>
+            <div class="expense-meta">${esc(personName(e.paidBy))} paid, split: ${esc(split)}</div>
+          </div>
+          <span class="expense-amount">${fmt(e.amount)}</span>
+          <div class="expense-btns">
+            <button type="button" class="small" data-edit="${esc(e.id)}" aria-label="Edit ${esc(e.desc)}">Edit</button>
+            <button type="button" class="small danger" data-delete="${esc(e.id)}" aria-label="Delete ${esc(e.desc)}">Delete</button>
+          </div>
+        </div>`;
+    }).join("");
   }
 
-  /* ---------- swim-lane grid ---------- */
+  /* ---------- Who shares what ---------- */
 
-  function renderGrid(r) {
-    var el = $("grid"), ppl = state.people, n = ppl.length;
-    if (!n) { el.innerHTML = '<p class="empty">No one added yet.</p>'; return; }
-    if (!state.expenses.length) { el.innerHTML = '<p class="empty">Add an expense and it will line up here with everyone sharing it.</p>'; return; }
-    var cols = "grid-template-columns:var(--lw) repeat(" + n + ",minmax(var(--cw),1fr))";
-    var html = '<div class="g-scroll"><div class="g-inner" style="min-width:calc(var(--lw) + ' + n + ' * var(--cw))">';
-    html += '<div class="g-row g-head" style="' + cols + '"><span></span>' + ppl.map(function (p) {
-      return '<span class="g-person" title="' + esc(p.name) + '">' + esc(p.name) + '</span>';
-    }).join("") + '</div>';
+  function renderLanes(summary) {
+    const el = $("lanes");
+    const people = trip.people;
+    const cols = people.length;
 
-    state.expenses.forEach(function (e, ri) {
-      var sh = shares(e), min = n, max = -1, cells = "";
-      ppl.forEach(function (p, i) {
-        var isPayer = p.id === e.paidBy, has = sh[p.id] !== undefined;
-        if (isPayer || has) { min = Math.min(min, i); max = Math.max(max, i); }
-        if (isPayer) cells += '<span class="g-cell"><span class="pill paid">' + (has ? fmt(sh[p.id]) : "paid") + '</span></span>';
-        else if (has) cells += '<span class="g-cell"><span class="pill owes">' + fmt(sh[p.id]) + '</span></span>';
-        else cells += '<span class="g-cell"></span>';
+    if (!cols) { el.innerHTML = '<p class="empty">No one added yet.</p>'; return; }
+    if (!trip.expenses.length) {
+      el.innerHTML = '<p class="empty">Add an expense and it will line up here with everyone sharing it.</p>';
+      return;
+    }
+
+    const gridStyle = `grid-template-columns: var(--label-w) repeat(${cols}, minmax(var(--col-w), 1fr))`;
+    const row = (classes, cells) => `<div class="lane-row ${classes}" style="${gridStyle}">${cells}</div>`;
+
+    const header = row("lane-head", "<span></span>" +
+      people.map((p) => `<span class="lane-person" title="${esc(p.name)}">${esc(p.name)}</span>`).join(""));
+
+    const expenseRows = trip.expenses.map((e, index) => {
+      const shares = splitExpense(e);
+      const involved = [];
+      const cells = people.map((p, col) => {
+        const isPayer = p.id === e.paidBy;
+        const hasShare = p.id in shares;
+        if (isPayer || hasShare) involved.push(col);
+        if (isPayer) return `<span class="lane-cell"><span class="pill paid">${hasShare ? fmt(shares[p.id]) : "paid"}</span></span>`;
+        if (hasShare) return `<span class="lane-cell"><span class="pill owes">${fmt(shares[p.id])}</span></span>`;
+        return '<span class="lane-cell"></span>';
+      }).join("");
+
+      const first = Math.min(...involved), last = Math.max(...involved);
+      const link = last > first
+        ? `<span class="lane-link" style="--first:${first}; --last:${last}; --cols:${cols}"></span>`
+        : "";
+      const label = `<span class="lane-label"><span class="lane-desc">${esc(e.desc)}</span>` +
+        `<span class="lane-sub">${fmt(e.amount)}, paid by ${esc(personName(e.paidBy))}</span></span>`;
+
+      return row(index % 2 ? "" : "band", link + label + cells);
+    }).join("");
+
+    const totalRow = (title, classes, valueFor) => row(`lane-total ${classes}`,
+      `<span class="lane-label">${title}</span>` + people.map(valueFor).join(""));
+
+    const totals =
+      totalRow("Paid", "first", (p) => `<span class="lane-value">${fmt(summary.paid[p.id])}</span>`) +
+      totalRow("Share", "", (p) => `<span class="lane-value">${fmt(summary.owed[p.id])}</span>`) +
+      totalRow("Net", "net", (p) => {
+        const net = summary.net[p.id];
+        const tone = net > 0 ? "pos" : net < 0 ? "neg" : "";
+        return `<span class="lane-value ${tone}">${fmtSigned(net)}</span>`;
       });
-      var line = max > min ? '<span class="g-line" style="--min:' + min + ';--max:' + max + ';--n:' + n + '"></span>' : "";
-      html += '<div class="g-row g-exp' + (ri % 2 ? "" : " band") + '" style="' + cols + '">' + line +
-        '<span class="g-label"><span class="g-desc">' + esc(e.desc) + '</span><span class="g-sub">' +
-        fmt(e.amount) + ', paid by ' + esc(personName(e.paidBy)) + '</span></span>' + cells + '</div>';
-    });
 
-    function foot(label, cls, val) {
-      return '<div class="g-row g-foot ' + cls + '" style="' + cols + '"><span class="g-label">' + label + '</span>' +
-        ppl.map(function (p) { return val(p); }).join("") + '</div>';
-    }
-    html += foot("Paid", "first", function (p) { return '<span class="g-val">' + fmt(r.paid[p.id]) + '</span>'; });
-    html += foot("Share", "", function (p) { return '<span class="g-val">' + fmt(r.owed[p.id]) + '</span>'; });
-    html += foot("Net", "net", function (p) {
-      var v = r.net[p.id];
-      return '<span class="g-val ' + (v > 0 ? "pos" : v < 0 ? "neg" : "") + '">' + (v > 0 ? "+" + fmt(v) : fmt(v)) + '</span>';
-    });
-    html += '</div></div><p class="note">Filled box: who paid, with their own share. Outlined boxes: what everyone else owes the payer. A line joins everyone sharing an expense. A positive net means the group owes that person. A negative net means they owe the group.</p>';
-    el.innerHTML = html;
+    el.innerHTML = `
+      <div class="lanes">
+        <div style="min-width: calc(var(--label-w) + ${cols} * var(--col-w))">${header}${expenseRows}${totals}</div>
+      </div>
+      <p class="note">Filled box: who paid, with their own share. Outlined boxes: what everyone else owes the payer.
+      A line joins everyone sharing an expense. A positive net means the group owes that person.
+      A negative net means they owe the group.</p>`;
   }
 
-  /* ---------- settlement graph ---------- */
+  /* ---------- Settle up ---------- */
 
-  var graphStep = 1;
-  var GRAPH_TEXT = {
-    1: "Every debt between two people, added up across expenses. Arrows point to the person who is owed.",
-    2: "Opposite debts between the same two people cancel each other.",
-    3: "The fewest payments that settle everyone. This matches Settle up."
+  function renderSettle(summary) {
+    const el = $("settle");
+    if (!trip.expenses.length) {
+      el.innerHTML = '<p class="empty">Add an expense and the payments needed to even things out will show here.</p>';
+      return;
+    }
+    const payments = fewestPayments(summary.net);
+    if (!payments.length) {
+      el.innerHTML = '<p class="settled">Everyone is even.</p>';
+      return;
+    }
+    el.innerHTML = '<ul class="settle">' + payments.map((t) => `
+      <li>
+        <span class="who"><b>${esc(personName(t.from))}</b> pays <b>${esc(personName(t.to))}</b></span>
+        <span class="amt">${fmt(t.amount)}</span>
+      </li>`).join("") + "</ul>";
+  }
+
+  /* ---------- How it adds up (graph) ---------- */
+
+  const GRAPH = {
+    width: 400, height: 380,
+    centerX: 200, centerY: 190, radiusX: 150, radiusY: 125,  // people sit on this oval
+    nodeHalfHeight: 22,
+    arrowGap: 7,       // space between an arrow tip and a box
+    pairOffset: 9,     // two arrows between the same people sit this far apart
+    labelGap: 15       // amount labels sit this far beside their arrow
   };
 
-  function debtMap() {
-    var m = {};
-    state.expenses.forEach(function (e) {
-      var sh = shares(e);
-      Object.keys(sh).forEach(function (id) {
-        if (id === e.paidBy) return;
-        m[id] = m[id] || {};
-        m[id][e.paidBy] = (m[id][e.paidBy] || []).concat([sh[id]]);
-      });
-    });
-    return m;
-  }
+  const GRAPH_STEPS = {
+    1: { button: "Every debt", unit: ["arrow", "arrows"],
+         note: "Every debt between two people, added up across expenses. Arrows point to the person who is owed." },
+    2: { button: "Netted by pair", unit: ["arrow", "arrows"],
+         note: "Opposite debts between the same two people cancel each other." },
+    3: { button: "Fewest payments", unit: ["payment", "payments"],
+         note: "The fewest payments that settle everyone. This matches Settle up." }
+  };
 
-  function graphEdges(step, r) {
-    var d = debtMap(), ppl = state.people, list = [];
-    function lst(a, b) { return (d[a] && d[a][b]) || []; }
-    function sum(a) { return a.reduce(function (s, x) { return s + x; }, 0); }
+  /** Arrows for a graph step, as { from, to, offset, label }. */
+  function graphArrows(step, summary) {
+    if (step === 3) {
+      return fewestPayments(summary.net).map((t) => ({ from: t.from, to: t.to, offset: 0, label: fmt(t.amount) }));
+    }
+
+    const debts = debtsByPair();
+    const owedList = (from, to) => (debts[from] && debts[from][to]) || [];
+    const arrows = [];
+
     if (step === 1) {
-      ppl.forEach(function (a) {
-        ppl.forEach(function (b) {
-          if (a.id === b.id) return;
-          var l = lst(a.id, b.id);
-          if (!l.length) return;
-          list.push({ a: a.id, b: b.id, off: lst(b.id, a.id).length ? 9 : 0, label: l.map(fmt).join(" + ") });
-        });
-      });
-    } else if (step === 2) {
-      for (var i = 0; i < ppl.length; i++) {
-        for (var j = i + 1; j < ppl.length; j++) {
-          var a = ppl[i].id, b = ppl[j].id, diff = sum(lst(a, b)) - sum(lst(b, a));
-          if (diff > 0) list.push({ a: a, b: b, off: 0, label: fmt(diff) });
-          else if (diff < 0) list.push({ a: b, b: a, off: 0, label: fmt(-diff) });
+      for (const a of trip.people) {
+        for (const b of trip.people) {
+          const list = owedList(a.id, b.id);
+          if (a.id === b.id || !list.length) continue;
+          const twoWay = owedList(b.id, a.id).length > 0;
+          arrows.push({ from: a.id, to: b.id, offset: twoWay ? GRAPH.pairOffset : 0, label: list.map(fmt).join(" + ") });
         }
       }
-    } else {
-      settle(r.net).forEach(function (t) { list.push({ a: t.from, b: t.to, off: 0, label: fmt(t.amt) }); });
+      return arrows;
     }
-    return list;
-  }
 
-  function segInside(S, ux, uy, c, hw, hh) {
-    var lo = -1e9, hi = 1e9;
-    [[S.x, ux, c.x, hw], [S.y, uy, c.y, hh]].forEach(function (q) {
-      if (Math.abs(q[1]) < 1e-9) { if (Math.abs(q[0] - q[2]) > q[3]) { lo = 1e9; hi = -1e9; } }
-      else {
-        var t1 = (q[2] - q[3] - q[0]) / q[1], t2 = (q[2] + q[3] - q[0]) / q[1];
-        lo = Math.max(lo, Math.min(t1, t2)); hi = Math.min(hi, Math.max(t1, t2));
+    // Step 2: net each pair once.
+    const people = trip.people;
+    for (let i = 0; i < people.length; i++) {
+      for (let j = i + 1; j < people.length; j++) {
+        const a = people[i].id, b = people[j].id;
+        const diff = sum(owedList(a, b)) - sum(owedList(b, a));
+        if (diff > 0) arrows.push({ from: a, to: b, offset: 0, label: fmt(diff) });
+        if (diff < 0) arrows.push({ from: b, to: a, offset: 0, label: fmt(-diff) });
       }
-    });
-    return lo <= hi ? [lo, hi] : null;
+    }
+    return arrows;
   }
 
-  function renderGraph(r) {
-    var el = $("graph"), ppl = state.people, n = ppl.length;
-    if (n < 2 || !state.expenses.length) {
+  /** Places people evenly around an oval, starting top left. */
+  function graphPositions() {
+    const n = trip.people.length;
+    const start = (-90 - 180 / n) * Math.PI / 180;
+    const positions = {};
+    trip.people.forEach((p, i) => {
+      const angle = start + (i * 2 * Math.PI) / n;
+      positions[p.id] = {
+        x: GRAPH.centerX + GRAPH.radiusX * Math.cos(angle),
+        y: GRAPH.centerY + GRAPH.radiusY * Math.sin(angle)
+      };
+    });
+    return positions;
+  }
+
+  /**
+   * For a ray from `point` along direction (dx, dy), returns the [enter, exit]
+   * distances where it is inside the box around `center`, or null if it misses.
+   */
+  function rayInBox(point, dx, dy, center, halfW, halfH) {
+    let enter = -Infinity, exit = Infinity;
+    for (const [p, d, c, half] of [[point.x, dx, center.x, halfW], [point.y, dy, center.y, halfH]]) {
+      if (Math.abs(d) < 1e-9) {
+        if (Math.abs(p - c) > half) return null;
+        continue;
+      }
+      const t1 = (c - half - p) / d, t2 = (c + half - p) / d;
+      enter = Math.max(enter, Math.min(t1, t2));
+      exit = Math.min(exit, Math.max(t1, t2));
+    }
+    return enter <= exit ? [enter, exit] : null;
+  }
+
+  /** SVG for one arrow and its amount label. */
+  function arrowSvg(arrow, positions, halfW, isFinal) {
+    const a = positions[arrow.from], b = positions[arrow.to];
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    const dx = (b.x - a.x) / length, dy = (b.y - a.y) / length;   // along the arrow
+    const nx = -dy, ny = dx;                                         // perpendicular to it
+
+    // Shift parallel arrows sideways, then trim the line so it stops short of both boxes.
+    const start = { x: a.x + nx * arrow.offset, y: a.y + ny * arrow.offset };
+    const boxW = halfW + GRAPH.arrowGap, boxH = GRAPH.nodeHalfHeight + GRAPH.arrowGap;
+    const leaveA = rayInBox(start, dx, dy, a, boxW, boxH);
+    const enterB = rayInBox(start, dx, dy, b, boxW, boxH);
+    const t0 = leaveA ? leaveA[1] : 0;
+    const t1 = enterB ? enterB[0] : length;
+
+    // Put the label beside the line: on its own side for parallel arrows,
+    // otherwise above a sloped line or right of a vertical one.
+    const side = arrow.offset
+      ? Math.sign(arrow.offset)
+      : Math.abs(ny) > 1e-9 ? (ny < 0 ? 1 : -1) : (nx > 0 ? 1 : -1);
+    const distance = Math.abs(arrow.offset) + GRAPH.labelGap;
+    const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+    let labelX = midX + nx * side * distance;
+    let labelY = midY + ny * side * distance;
+    let anchor = "middle";
+    const sideways = nx * side;
+    if (Math.abs(sideways) > 0.6) {   // mostly vertical line: align text to the side
+      anchor = sideways > 0 ? "start" : "end";
+      labelX = midX + (sideways > 0 ? 10 : -10);
+      labelY = midY;
+    }
+
+    const color = isFinal ? "var(--accent)" : "var(--owe)";
+    const marker = isFinal ? "arrow-final" : "arrow-debt";
+    return `
+      <line x1="${(start.x + dx * t0).toFixed(1)}" y1="${(start.y + dy * t0).toFixed(1)}"
+            x2="${(start.x + dx * t1).toFixed(1)}" y2="${(start.y + dy * t1).toFixed(1)}"
+            style="stroke:${color}" stroke-width="${isFinal ? 2.5 : 1.5}" marker-end="url(#${marker})"/>
+      <text class="graph-amount" x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}"
+            text-anchor="${anchor}" dominant-baseline="central">${esc(arrow.label)}</text>`;
+  }
+
+  /** SVG for one person's box. */
+  function personSvg(person, position, halfW, net) {
+    const maxChars = Math.floor((halfW * 2 - 12) / 8);
+    const name = person.name.length > maxChars ? person.name.slice(0, maxChars - 1) + "\u2026" : person.name;
+    const balance = net < 0 ? `owes ${fmt(-net)}` : net > 0 ? `owed ${fmt(net)}` : "even";
+    const { x, y } = position;
+    const h = GRAPH.nodeHalfHeight;
+    return `
+      <g>
+        <title>${esc(person.name)}</title>
+        <rect class="graph-node" x="${(x - halfW).toFixed(1)}" y="${(y - h).toFixed(1)}" width="${halfW * 2}" height="${h * 2}" rx="8"/>
+        <text class="graph-name" x="${x.toFixed(1)}" y="${(y - 7).toFixed(1)}" text-anchor="middle" dominant-baseline="central">${esc(name)}</text>
+        <text class="graph-net" x="${x.toFixed(1)}" y="${(y + 10).toFixed(1)}" text-anchor="middle" dominant-baseline="central">${esc(balance)}</text>
+      </g>`;
+  }
+
+  const arrowMarker = (id, color) => `
+    <marker id="${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" style="stroke:${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>`;
+
+  function renderGraph(summary) {
+    const el = $("graph");
+    const n = trip.people.length;
+    if (n < 2 || !trip.expenses.length) {
       el.innerHTML = '<p class="empty">Add at least two people and an expense to see how the payments work out.</p>';
       return;
     }
-    var HW = n <= 4 ? 48 : n <= 6 ? 42 : 38, HH = 22, GAP = 7, pos = {};
-    var start = (-90 - 180 / n) * Math.PI / 180;
-    ppl.forEach(function (p, i) {
-      var ang = start + i * 2 * Math.PI / n;
-      pos[p.id] = { x: 200 + 150 * Math.cos(ang), y: 190 + 125 * Math.sin(ang) };
-    });
 
-    var edges = graphEdges(graphStep, r), final = graphStep === 3;
-    var mk = final ? "url(#ah-ok)" : "url(#ah-owe)", stroke = final ? "var(--accent)" : "var(--owe)";
-    var svg = '<svg viewBox="0 0 400 380" role="img" aria-label="Arrows showing who pays whom"><defs>' +
-      ['owe', 'ok'].map(function (k) {
-        return '<marker id="ah-' + k + '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">' +
-          '<path d="M2 1L8 5L2 9" fill="none" style="stroke:' + (k === 'ok' ? 'var(--accent)' : 'var(--owe)') + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>';
-      }).join("") + '</defs>';
+    const step = ui.graphStep;
+    const isFinal = step === 3;
+    const halfW = n <= 4 ? 48 : n <= 6 ? 42 : 38;   // narrower boxes for bigger groups
+    const positions = graphPositions();
+    const arrows = graphArrows(step, summary);
 
-    edges.forEach(function (e) {
-      var A = pos[e.a], B = pos[e.b], dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy);
-      var ux = dx / L, uy = dy / L, nx = -uy, ny = ux, off = e.off;
-      var S = { x: A.x + nx * off, y: A.y + ny * off };
-      var ia = segInside(S, ux, uy, A, HW + GAP, HH + GAP), ib = segInside(S, ux, uy, B, HW + GAP, HH + GAP);
-      var s0 = ia ? ia[1] : 0, s1 = ib ? ib[0] : L;
-      var sign = off ? (off > 0 ? 1 : -1) : (Math.abs(ny) > 1e-9 ? (ny < 0 ? 1 : -1) : (nx > 0 ? 1 : -1));
-      var dist = off ? Math.abs(off) + 15 : 15, mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
-      var lx = mx + nx * sign * dist, ly = my + ny * sign * dist, anchor = "middle";
-      if (Math.abs(nx * sign) > 0.6) { anchor = nx * sign > 0 ? "start" : "end"; lx = mx + (nx * sign > 0 ? 10 : -10); ly = my; }
-      svg += '<line x1="' + (S.x + ux * s0).toFixed(1) + '" y1="' + (S.y + uy * s0).toFixed(1) + '" x2="' + (S.x + ux * s1).toFixed(1) +
-        '" y2="' + (S.y + uy * s1).toFixed(1) + '" style="stroke:' + stroke + '" stroke-width="' + (final ? 2.5 : 1.5) + '" marker-end="' + mk + '"/>' +
-        '<text class="g-amt" x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" dominant-baseline="central">' + esc(e.label) + '</text>';
-    });
+    const svg = `
+      <svg viewBox="0 0 ${GRAPH.width} ${GRAPH.height}" role="img" aria-label="Arrows showing who pays whom">
+        <defs>${arrowMarker("arrow-debt", "var(--owe)")}${arrowMarker("arrow-final", "var(--accent)")}</defs>
+        ${arrows.map((arrow) => arrowSvg(arrow, positions, halfW, isFinal)).join("")}
+        ${trip.people.map((p) => personSvg(p, positions[p.id], halfW, summary.net[p.id])).join("")}
+      </svg>`;
 
-    var maxc = Math.floor((HW * 2 - 12) / 8);
-    ppl.forEach(function (p) {
-      var c = pos[p.id], v = r.net[p.id];
-      var nm = p.name.length > maxc ? p.name.slice(0, maxc - 1) + "\u2026" : p.name;
-      var sub = v < 0 ? "owes " + fmt(-v) : v > 0 ? "owed " + fmt(v) : "even";
-      svg += '<g><title>' + esc(p.name) + '</title><rect class="g-node" x="' + (c.x - HW).toFixed(1) + '" y="' + (c.y - HH).toFixed(1) +
-        '" width="' + (HW * 2) + '" height="' + (HH * 2) + '" rx="8"/>' +
-        '<text class="g-name" x="' + c.x.toFixed(1) + '" y="' + (c.y - 7).toFixed(1) + '" text-anchor="middle" dominant-baseline="central">' + esc(nm) + '</text>' +
-        '<text class="g-net" x="' + c.x.toFixed(1) + '" y="' + (c.y + 10).toFixed(1) + '" text-anchor="middle" dominant-baseline="central">' + esc(sub) + '</text></g>';
-    });
-    svg += '</svg>';
-
-    var btns = [[1, "Every debt"], [2, "Netted by pair"], [3, "Fewest payments"]].map(function (x) {
-      return '<button type="button" class="small' + (graphStep === x[0] ? " on" : "") + '" data-gstep="' + x[0] + '" aria-pressed="' + (graphStep === x[0]) + '">' + x[1] + '</button>';
+    const buttons = Object.entries(GRAPH_STEPS).map(([key, info]) => {
+      const on = Number(key) === step;
+      return `<button type="button" class="small${on ? " on" : ""}" data-graph-step="${key}" aria-pressed="${on}">${info.button}</button>`;
     }).join("");
-    var count = edges.length ? edges.length + (final ? (edges.length === 1 ? " payment" : " payments") : (edges.length === 1 ? " arrow" : " arrows")) : "Nothing to settle";
-    el.innerHTML = '<div class="seg" role="group" aria-label="Graph step">' + btns + '<span class="cap">' + count + '</span></div>' + svg +
-      '<p class="note">' + GRAPH_TEXT[graphStep] + '</p>';
+
+    const [one, many] = GRAPH_STEPS[step].unit;
+    const count = arrows.length ? plural(arrows.length, one, many) : "Nothing to settle";
+
+    el.innerHTML = `
+      <div class="step-bar" role="group" aria-label="Graph step">${buttons}<span class="step-count">${count}</span></div>
+      ${svg}
+      <p class="note">${GRAPH_STEPS[step].note}</p>`;
   }
 
-  function toast(msg) {
-    var t = $("toast");
-    t.textContent = msg;
-    try { if (t.showPopover && !t.matches(":popover-open")) t.showPopover(); } catch (e) {}
-    requestAnimationFrame(function () { t.classList.add("show"); });
-    clearTimeout(toast._t);
-    toast._t = setTimeout(function () {
-      t.classList.remove("show");
-      setTimeout(function () {
-        try { if (t.hidePopover && t.matches(":popover-open") && !t.classList.contains("show")) t.hidePopover(); } catch (e) {}
+  /* =========================================================
+     Toast, menu, and dialogs
+     ========================================================= */
+
+  let toastTimer = null;
+
+  /** Shows a short message. It uses the popover layer so it appears above open dialogs. */
+  function toast(message) {
+    const el = $("toast");
+    const isOpen = () => { try { return el.matches(":popover-open"); } catch { return false; } };
+
+    el.textContent = message;
+    if (el.showPopover && !isOpen()) el.showPopover();
+    requestAnimationFrame(() => el.classList.add("show"));
+
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      el.classList.remove("show");
+      setTimeout(() => {
+        if (el.hidePopover && isOpen() && !el.classList.contains("show")) el.hidePopover();
       }, 250);
     }, 3000);
   }
 
-  /* ---------- menu + dialogs ---------- */
+  const menuButton = $("menu-btn");
+  const menu = $("menu");
+  const isMenuOpen = () => !menu.classList.contains("hidden");
 
-  var menuBtn = $("menu-btn"), menuEl = $("menu");
   function setMenu(open) {
-    menuEl.classList.toggle("hidden", !open);
-    menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    menu.classList.toggle("hidden", !open);
+    menuButton.setAttribute("aria-expanded", String(open));
   }
+
+  const FOCUS_ON_OPEN = { "dlg-expense": "e-desc", "dlg-people": "person-name" };
+
   function openDialog(id) {
-    var d = $(id);
+    const dialog = $(id);
     setMenu(false);
-    if (!d.open) d.showModal();
-    if (id === "dlg-expense") $("e-desc").focus();
-    if (id === "dlg-people") $("person-name").focus();
+    if (!dialog.open) dialog.showModal();
+    if (FOCUS_ON_OPEN[id]) $(FOCUS_ON_OPEN[id]).focus();
   }
-  function closeDialog(id) { var d = $(id); if (d.open) d.close(); }
 
-  menuBtn.addEventListener("click", function () { setMenu(menuEl.classList.contains("hidden")); });
-  menuEl.addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-open]");
-    if (b) openDialog(b.getAttribute("data-open"));
-  });
-  document.addEventListener("click", function (ev) {
-    if (!menuEl.classList.contains("hidden") && !ev.target.closest(".menu-wrap")) setMenu(false);
-  });
-  document.addEventListener("keydown", function (ev) {
-    if (ev.key === "Escape" && !menuEl.classList.contains("hidden")) { setMenu(false); menuBtn.focus(); }
-  });
-  document.querySelectorAll("dialog").forEach(function (d) {
-    d.addEventListener("click", function (ev) {
-      if (ev.target === d || ev.target.closest("[data-close]")) d.close();
-    });
-  });
-  $("dlg-expense").addEventListener("close", function () { clearForm(); renderForm(); });
-  document.addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-open-from-empty]");
-    if (b) openDialog(b.getAttribute("data-open-from-empty"));
-  });
+  function closeDialog(id) {
+    const dialog = $(id);
+    if (dialog.open) dialog.close();
+  }
 
-  function clearForm() {
+  /* =========================================================
+     Expense form
+     ========================================================= */
+
+  function resetExpenseForm() {
     $("e-desc").value = "";
     $("e-amount").value = "";
     $("e-error").textContent = "";
-    editingId = null;
-    draftParts = new Set(state.people.map(function (p) { return p.id; }));
+    ui.editingId = null;
+    ui.splitWith = new Set(allPeopleIds());
   }
 
-  /* ---------- events ---------- */
+  function startEditing(expense) {
+    ui.editingId = expense.id;
+    ui.splitWith = new Set(expense.participants);
+    $("e-desc").value = expense.desc;
+    $("e-amount").value = (expense.amount / 100).toFixed(2);
+    renderExpenseForm();
+    $("e-paid").value = expense.paidBy;
+    openDialog("dlg-expense");
+  }
 
-  $("trip-name").addEventListener("input", function (e) {
-    state.name = e.target.value;
-    saveLocal();
-  });
+  function readExpenseForm() {
+    return {
+      desc: $("e-desc").value.trim(),
+      amount: Math.round(parseFloat($("e-amount").value) * 100),
+      paidBy: $("e-paid").value,
+      participants: allPeopleIds().filter((id) => ui.splitWith.has(id))
+    };
+  }
 
-  $("person-form").addEventListener("submit", function (ev) {
-    ev.preventDefault();
-    var input = $("person-name");
-    var name = input.value.trim();
-    var err = $("person-error");
-    err.textContent = "";
-    if (!name) { err.textContent = "Enter a name."; return; }
-    if (state.people.some(function (p) { return p.name.toLowerCase() === name.toLowerCase(); })) {
-      err.textContent = name + " is already on the list."; return;
-    }
-    var p = { id: uid(), name: name };
-    state.people.push(p);
-    draftParts.add(p.id);
-    input.value = "";
-    saveLocal();
-    render();
-    input.focus();
-  });
+  /** Returns an error message, or an empty string when the expense is valid. */
+  function expenseError(input) {
+    if (!trip.people.length) return "Add at least one person first.";
+    if (!input.desc) return "Enter what the expense was for.";
+    if (!Number.isFinite(input.amount) || input.amount <= 0) return "Enter an amount greater than zero.";
+    if (!input.paidBy) return "Choose who paid.";
+    if (!input.participants.length) return "Choose at least one person to split with.";
+    return "";
+  }
 
-  $("people").addEventListener("click", function (ev) {
-    var btn = ev.target.closest("[data-remove-person]");
-    if (!btn) return;
-    var id = btn.getAttribute("data-remove-person");
-    var used = state.expenses.some(function (e) { return e.paidBy === id || e.participants.indexOf(id) !== -1; });
-    var err = $("person-error");
-    if (used) {
-      err.textContent = personName(id) + " is part of existing expenses. Edit or delete those first.";
-      return;
-    }
-    err.textContent = "";
-    state.people = state.people.filter(function (p) { return p.id !== id; });
-    draftParts.delete(id);
-    saveLocal();
-    render();
-  });
+  function saveExpense(event) {
+    event.preventDefault();
+    const input = readExpenseForm();
+    const error = expenseError(input);
+    $("e-error").textContent = error;
+    if (error) return;
 
-  $("e-parts").addEventListener("change", function (ev) {
-    var id = ev.target.getAttribute("data-part");
-    if (!id) return;
-    if (ev.target.checked) draftParts.add(id); else draftParts.delete(id);
-  });
-  $("sel-all").addEventListener("click", function () {
-    draftParts = new Set(state.people.map(function (p) { return p.id; }));
-    renderForm();
-  });
-  $("sel-none").addEventListener("click", function () {
-    draftParts = new Set();
-    renderForm();
-  });
-
-  $("expense-form").addEventListener("submit", function (ev) {
-    ev.preventDefault();
-    var desc = $("e-desc").value.trim();
-    var amount = Math.round(parseFloat($("e-amount").value) * 100);
-    var paidBy = $("e-paid").value;
-    var parts = state.people.filter(function (p) { return draftParts.has(p.id); }).map(function (p) { return p.id; });
-    var err = $("e-error");
-    if (!state.people.length) { err.textContent = "Add at least one person first."; return; }
-    if (!desc) { err.textContent = "Enter what the expense was for."; return; }
-    if (!isFinite(amount) || amount <= 0) { err.textContent = "Enter an amount greater than zero."; return; }
-    if (!paidBy) { err.textContent = "Choose who paid."; return; }
-    if (!parts.length) { err.textContent = "Choose at least one person to split with."; return; }
-
-    if (editingId) {
-      var e = state.expenses.find(function (x) { return x.id === editingId; });
-      if (e) { e.desc = desc; e.amount = amount; e.paidBy = paidBy; e.participants = parts; }
+    const existing = ui.editingId && trip.expenses.find((x) => x.id === ui.editingId);
+    if (existing) {
+      Object.assign(existing, input);
       toast("Changes saved.");
     } else {
-      state.expenses.push({ id: uid(), desc: desc, amount: amount, paidBy: paidBy, participants: parts });
+      trip.expenses.push({ id: newId(), ...input });
       toast("Expense added.");
     }
-    clearForm();
-    saveLocal();
-    render();
-    closeDialog("dlg-expense");
-  });
 
-  $("e-cancel").addEventListener("click", function () {
+    resetExpenseForm();
+    commit();
     closeDialog("dlg-expense");
-  });
+  }
 
-  $("expenses").addEventListener("click", function (ev) {
-    var edit = ev.target.closest("[data-edit]");
-    var del = ev.target.closest("[data-delete]");
-    if (edit) {
-      var e = state.expenses.find(function (x) { return x.id === edit.getAttribute("data-edit"); });
-      if (!e) return;
-      editingId = e.id;
-      $("e-desc").value = e.desc;
-      $("e-amount").value = (e.amount / 100).toFixed(2);
-      draftParts = new Set(e.participants);
-      renderForm();
-      $("e-paid").value = e.paidBy;
-      $("h-expense").textContent = "Edit expense";
-      openDialog("dlg-expense");
-    } else if (del) {
-      var target = state.expenses.find(function (x) { return x.id === del.getAttribute("data-delete"); });
-      if (!target) return;
-      if (!confirm('Delete "' + target.desc + '" (' + fmt(target.amount) + ")?")) return;
-      state.expenses = state.expenses.filter(function (x) { return x.id !== target.id; });
-      if (editingId === target.id) clearForm();
-      saveLocal();
-      render();
+  function deleteExpense(expense) {
+    if (!confirm(`Delete "${expense.desc}" (${fmt(expense.amount)})?`)) return;
+    trip.expenses = trip.expenses.filter((x) => x.id !== expense.id);
+    if (ui.editingId === expense.id) resetExpenseForm();
+    commit();
+  }
+
+  /* =========================================================
+     People
+     ========================================================= */
+
+  function addPerson(event) {
+    event.preventDefault();
+    const input = $("person-name");
+    const error = $("person-error");
+    const name = input.value.trim();
+
+    error.textContent = "";
+    if (!name) { error.textContent = "Enter a name."; return; }
+    if (trip.people.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
+      error.textContent = `${name} is already on the list.`;
+      return;
     }
-  });
 
-  $("copy-link").addEventListener("click", function () {
-    var url = location.origin + location.pathname + HASH_PREFIX + encodeState(state);
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(
-        function () { toast("Share link copied."); },
-        function () { window.prompt("Copy this link:", url); }
-      );
+    const person = { id: newId(), name };
+    trip.people.push(person);
+    ui.splitWith.add(person.id);
+    input.value = "";
+    commit();
+    input.focus();
+  }
+
+  function removePerson(id) {
+    const error = $("person-error");
+    const inUse = trip.expenses.some((e) => e.paidBy === id || e.participants.includes(id));
+    if (inUse) {
+      error.textContent = `${personName(id)} is part of existing expenses. Edit or delete those first.`;
+      return;
+    }
+    error.textContent = "";
+    trip.people = trip.people.filter((p) => p.id !== id);
+    ui.splitWith.delete(id);
+    commit();
+  }
+
+  /* =========================================================
+     Save and share
+     ========================================================= */
+
+  function copyShareLink() {
+    const url = location.origin + location.pathname + SHARE_PREFIX + encodeTrip(trip);
+    const fallback = () => window.prompt("Copy this link:", url);
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(() => toast("Share link copied."), fallback);
     } else {
-      window.prompt("Copy this link:", url);
+      fallback();
     }
-  });
+  }
 
-  $("export").addEventListener("click", function () {
-    var slug = (state.name || "trip").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
-    var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = slug + ".json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  function downloadBackup() {
+    const slug = (trip.name || "trip").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
+    const blob = new Blob([JSON.stringify(trip, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${slug}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     toast("Backup downloaded.");
-  });
+  }
 
-  $("import-btn").addEventListener("click", function () { $("import-file").click(); });
-  $("import-file").addEventListener("change", function (ev) {
-    var file = ev.target.files && ev.target.files[0];
-    ev.target.value = "";
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function () {
-      var data = null;
-      try { data = normalize(JSON.parse(reader.result)); } catch (e) { data = null; }
+  function loadBackup(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data = null;
+      try { data = normalizeTrip(JSON.parse(reader.result)); } catch { data = null; }
       if (!data) { toast("That file is not a valid trip backup."); return; }
-      if (!isEmpty(state) && !confirm("Loading this backup replaces the trip currently in this browser. Continue?")) return;
-      adopt(data);
+      if (!isEmptyTrip(trip) && !confirm("Loading this backup replaces the trip currently in this browser. Continue?")) return;
+      replaceTrip(data);
       closeDialog("dlg-data");
       toast("Backup loaded.");
     };
     reader.readAsText(file);
-  });
+  }
 
-  $("reset").addEventListener("click", function () {
+  function startNewTrip() {
     if (!confirm("Start a new trip? This clears everything in this browser. Download a backup first if you need it.")) return;
-    adopt(blank());
+    replaceTrip(blankTrip());
     closeDialog("dlg-data");
+  }
+
+  /* =========================================================
+     Event wiring
+     ========================================================= */
+
+  // Any element with data-open="dialog-id" opens that dialog.
+  // Clicking anywhere outside the menu closes it.
+  document.addEventListener("click", (event) => {
+    const opener = event.target.closest("[data-open]");
+    if (opener) openDialog(opener.dataset.open);
+    if (isMenuOpen() && !event.target.closest(".menu-wrap")) setMenu(false);
   });
 
-  $("banner-load").addEventListener("click", function () {
-    if (pendingShared) adopt(pendingShared);
-    pendingShared = null;
-    $("banner").classList.add("hidden");
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isMenuOpen()) {
+      setMenu(false);
+      menuButton.focus();
+    }
+  });
+
+  menuButton.addEventListener("click", () => setMenu(!isMenuOpen()));
+
+  // Dialogs close on their × button or a click on the backdrop.
+  for (const dialog of document.querySelectorAll("dialog")) {
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog || event.target.closest("[data-close]")) dialog.close();
+    });
+  }
+
+  // Header
+  $("trip-name").addEventListener("input", (event) => {
+    trip.name = event.target.value;
+    saveTrip();
+  });
+
+  // People dialog
+  $("person-form").addEventListener("submit", addPerson);
+  $("people").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-remove-person]");
+    if (button) removePerson(button.dataset.removePerson);
+  });
+
+  // Expense dialog
+  $("expense-form").addEventListener("submit", saveExpense);
+  $("e-cancel").addEventListener("click", () => closeDialog("dlg-expense"));
+  $("dlg-expense").addEventListener("close", () => { resetExpenseForm(); renderExpenseForm(); });
+  $("e-split").addEventListener("change", (event) => {
+    const id = event.target.dataset.split;
+    if (!id) return;
+    if (event.target.checked) ui.splitWith.add(id); else ui.splitWith.delete(id);
+  });
+  $("split-all").addEventListener("click", () => { ui.splitWith = new Set(allPeopleIds()); renderExpenseForm(); });
+  $("split-none").addEventListener("click", () => { ui.splitWith = new Set(); renderExpenseForm(); });
+
+  // Expense list
+  $("expenses").addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-edit]");
+    const deleteButton = event.target.closest("[data-delete]");
+    const id = (editButton || deleteButton)?.dataset[editButton ? "edit" : "delete"];
+    const expense = id && trip.expenses.find((x) => x.id === id);
+    if (!expense) return;
+    if (editButton) startEditing(expense); else deleteExpense(expense);
+  });
+
+  // Graph step buttons (focus stays on the pressed button after redraw)
+  $("graph").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-graph-step]");
+    if (!button) return;
+    ui.graphStep = Number(button.dataset.graphStep);
+    renderGraph(summarize());
+    $("graph").querySelector(`[data-graph-step="${ui.graphStep}"]`)?.focus();
+  });
+
+  // Save and share dialog
+  $("copy-link").addEventListener("click", copyShareLink);
+  $("export").addEventListener("click", downloadBackup);
+  $("import-btn").addEventListener("click", () => $("import-file").click());
+  $("import-file").addEventListener("change", (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) loadBackup(file);
+  });
+  $("reset").addEventListener("click", startNewTrip);
+
+  // Shared-link banner
+  $("banner-load").addEventListener("click", () => {
+    if (ui.pendingShared) replaceTrip(ui.pendingShared);
+    hideBanner();
     toast("Shared trip loaded.");
   });
-  $("banner-keep").addEventListener("click", function () {
-    pendingShared = null;
-    $("banner").classList.add("hidden");
-  });
+  $("banner-keep").addEventListener("click", hideBanner);
+  window.addEventListener("hashchange", readShareLink);
 
-  $("graph").addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-gstep]");
-    if (!b) return;
-    graphStep = +b.getAttribute("data-gstep");
-    renderGraph(compute());
-    var again = $("graph").querySelector('[data-gstep="' + graphStep + '"]');
-    if (again) again.focus();
-  });
+  /* =========================================================
+     Start
+     ========================================================= */
 
-  window.addEventListener("hashchange", checkHash);
-
+  resetExpenseForm();
   render();
-  checkHash();
+  readShareLink();
 })();
 </script>
 </body>
