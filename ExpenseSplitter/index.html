@@ -227,22 +227,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, .check:focus-wi
 }
 
 /* =========================================================
-   7. Settle up
-   ========================================================= */
-.settle { list-style: none; margin: 0; padding: 0; }
-.settle li {
-  display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  padding: 14px 0; border-top: 2px dashed var(--line);
-}
-.settle li:first-child { border-top: 0; padding-top: 0; }
-.settle li:last-child { padding-bottom: 0; }
-.settle .who { font-size: 1.05rem; overflow-wrap: anywhere; }
-.settle .who b { font-weight: 800; }
-.settle .amt { font-size: 1.5rem; font-weight: 800; color: var(--owe); font-variant-numeric: tabular-nums; }
-.settled { font-weight: 600; color: var(--accent); margin: 0; }
-
-/* =========================================================
-   8. How it adds up (collapsible graph)
+   7. How it adds up (collapsible graph)
    ========================================================= */
 .how > summary {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -267,7 +252,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, .check:focus-wi
 .graph-amount { font: 700 13px var(--font); fill: var(--ink); font-variant-numeric: tabular-nums; }
 
 /* =========================================================
-   9. Dialogs and forms inside them
+   8. Dialogs and forms inside them
    ========================================================= */
 dialog {
   width: min(560px, calc(100% - 24px)); max-height: calc(100% - 24px);
@@ -303,7 +288,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
 .check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
 
 /* =========================================================
-   10. Shared-link banner and toast
+   9. Shared-link banner and toast
    ========================================================= */
 .banner {
   margin-bottom: 20px; padding: 14px 16px;
@@ -320,7 +305,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
 .toast.show { opacity: 1; }
 
 /* =========================================================
-   11. Small screens and reduced motion
+   10. Small screens and reduced motion
    ========================================================= */
 @media (max-width: 480px) { .row.stack-sm { flex-direction: column; } }
 @media (max-width: 420px) {
@@ -370,11 +355,6 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
   <section aria-labelledby="h-lanes">
     <h2 id="h-lanes">Who shares what</h2>
     <div class="panel lanes-panel" id="lanes"></div>
-  </section>
-
-  <section aria-labelledby="h-settle">
-    <h2 id="h-settle">Settle up</h2>
-    <div class="panel" id="settle"></div>
   </section>
 
   <section aria-labelledby="h-graph">
@@ -449,11 +429,13 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
   <div class="dlg-body">
     <div class="tools">
       <button type="button" id="copy-link">Copy share link</button>
+      <button type="button" id="export-pdf">Download PDF</button>
       <button type="button" id="export">Download backup</button>
       <button type="button" id="import-btn">Load backup</button>
       <button type="button" id="reset" class="danger">Start a new trip</button>
     </div>
     <input type="file" id="import-file" accept="application/json,.json" class="hidden">
+    <p class="note">The PDF is a printable summary: the three How it adds up graphs, everyone's balance, and every expense.</p>
     <p class="note">Your trip is saved automatically in this browser. The share link holds the whole trip in the link itself, so anyone with the link can see it. Sharing does not sync: to pass on changes, send a new link or backup.</p>
   </div>
 </dialog>
@@ -693,7 +675,6 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     renderExpenseForm();
     renderExpenseList();
     renderLanes(summary);
-    renderSettle(summary);
     renderGraph(summary);
   }
 
@@ -821,26 +802,6 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       A negative net means they owe the group.</p>`;
   }
 
-  /* ---------- Settle up ---------- */
-
-  function renderSettle(summary) {
-    const el = $("settle");
-    if (!trip.expenses.length) {
-      el.innerHTML = '<p class="empty">Add an expense and the payments needed to even things out will show here.</p>';
-      return;
-    }
-    const payments = fewestPayments(summary.net);
-    if (!payments.length) {
-      el.innerHTML = '<p class="settled">Everyone is even.</p>';
-      return;
-    }
-    el.innerHTML = '<ul class="settle">' + payments.map((t) => `
-      <li>
-        <span class="who"><b>${esc(personName(t.from))}</b> pays <b>${esc(personName(t.to))}</b></span>
-        <span class="amt">${fmt(t.amount)}</span>
-      </li>`).join("") + "</ul>";
-  }
-
   /* ---------- How it adds up (graph) ---------- */
 
   const GRAPH = {
@@ -858,7 +819,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     2: { button: "Netted by pair", unit: ["arrow", "arrows"],
          note: "Opposite debts between the same two people cancel each other." },
     3: { button: "Fewest payments", unit: ["payment", "payments"],
-         note: "The fewest payments that settle everyone. This matches Settle up." }
+         note: "The fewest payments that settle everyone." }
   };
 
   /** Arrows for a graph step, as { from, to, offset, label }. */
@@ -929,8 +890,22 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     return enter <= exit ? [enter, exit] : null;
   }
 
-  /** SVG for one arrow and its amount label. */
-  function arrowSvg(arrow, positions, halfW, isFinal) {
+  /** Box half-width for a group size: narrower boxes for bigger groups. */
+  const graphHalfWidth = (n) => (n <= 4 ? 48 : n <= 6 ? 42 : 38);
+
+  /** A person's name cut to fit their box, and their balance line. */
+  function nodeText(person, halfW, net) {
+    const maxChars = Math.floor((halfW * 2 - 12) / 8);
+    const name = person.name.length > maxChars ? person.name.slice(0, maxChars - 1) + "\u2026" : person.name;
+    const balance = net < 0 ? `owes ${fmt(-net)}` : net > 0 ? `owed ${fmt(net)}` : "even";
+    return { name, balance };
+  }
+
+  /**
+   * Where to draw one arrow and its label, in graph units.
+   * Returns { x1, y1, x2, y2, labelX, labelY, anchor } with anchor "start", "middle", or "end".
+   */
+  function arrowGeometry(arrow, positions, halfW) {
     const a = positions[arrow.from], b = positions[arrow.to];
     const length = Math.hypot(b.x - a.x, b.y - a.y);
     const dx = (b.x - a.x) / length, dy = (b.y - a.y) / length;   // along the arrow
@@ -961,21 +936,28 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       labelY = midY;
     }
 
+    return {
+      x1: start.x + dx * t0, y1: start.y + dy * t0,
+      x2: start.x + dx * t1, y2: start.y + dy * t1,
+      labelX, labelY, anchor
+    };
+  }
+
+  /** SVG for one arrow and its amount label. */
+  function arrowSvg(arrow, positions, halfW, isFinal) {
+    const g = arrowGeometry(arrow, positions, halfW);
     const color = isFinal ? "var(--accent)" : "var(--owe)";
     const marker = isFinal ? "arrow-final" : "arrow-debt";
     return `
-      <line x1="${(start.x + dx * t0).toFixed(1)}" y1="${(start.y + dy * t0).toFixed(1)}"
-            x2="${(start.x + dx * t1).toFixed(1)}" y2="${(start.y + dy * t1).toFixed(1)}"
+      <line x1="${g.x1.toFixed(1)}" y1="${g.y1.toFixed(1)}" x2="${g.x2.toFixed(1)}" y2="${g.y2.toFixed(1)}"
             style="stroke:${color}" stroke-width="${isFinal ? 2.5 : 1.5}" marker-end="url(#${marker})"/>
-      <text class="graph-amount" x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}"
-            text-anchor="${anchor}" dominant-baseline="central">${esc(arrow.label)}</text>`;
+      <text class="graph-amount" x="${g.labelX.toFixed(1)}" y="${g.labelY.toFixed(1)}"
+            text-anchor="${g.anchor}" dominant-baseline="central">${esc(arrow.label)}</text>`;
   }
 
   /** SVG for one person's box. */
   function personSvg(person, position, halfW, net) {
-    const maxChars = Math.floor((halfW * 2 - 12) / 8);
-    const name = person.name.length > maxChars ? person.name.slice(0, maxChars - 1) + "\u2026" : person.name;
-    const balance = net < 0 ? `owes ${fmt(-net)}` : net > 0 ? `owed ${fmt(net)}` : "even";
+    const { name, balance } = nodeText(person, halfW, net);
     const { x, y } = position;
     const h = GRAPH.nodeHalfHeight;
     return `
@@ -1002,7 +984,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
 
     const step = ui.graphStep;
     const isFinal = step === 3;
-    const halfW = n <= 4 ? 48 : n <= 6 ? 42 : 38;   // narrower boxes for bigger groups
+    const halfW = graphHalfWidth(n);
     const positions = graphPositions();
     const arrows = graphArrows(step, summary);
 
@@ -1195,17 +1177,274 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     }
   }
 
+  /** File-name-safe version of the trip name. */
+  const tripSlug = () => (trip.name || "trip").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
+
   function downloadBackup() {
-    const slug = (trip.name || "trip").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
     const blob = new Blob([JSON.stringify(trip, null, 2)], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `${slug}.json`;
+    link.download = `${tripSlug()}.json`;
     document.body.appendChild(link);
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     toast("Backup downloaded.");
+  }
+
+  /* =========================================================
+     PDF summary
+     jsPDF loads from the CDN the first time it is needed.
+     ========================================================= */
+
+  const JSPDF_URL = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+  let jspdfPromise = null;
+
+  function loadJsPDF() {
+    if (window.jspdf) return Promise.resolve(window.jspdf);
+    if (!jspdfPromise) {
+      jspdfPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = JSPDF_URL;
+        script.onload = () => (window.jspdf ? resolve(window.jspdf) : reject(new Error("jsPDF missing")));
+        script.onerror = () => { jspdfPromise = null; script.remove(); reject(new Error("load failed")); };
+        document.head.appendChild(script);
+      });
+    }
+    return jspdfPromise;
+  }
+
+  /** The PDF's built-in font has no special spaces or minus sign, so swap in plain ones. */
+  const pdfText = (value) => String(value).replace(/[\u00a0\u202f]/g, " ").replace(/\u2212/g, "-");
+
+  /** Graph units to PDF points. Text keeps fixed sizes so it stays readable. */
+  const PDF_GRAPH_SCALE = 0.8;
+  const PDF_COLORS = {
+    ink: [18, 38, 58], muted: [86, 104, 120], line: [201, 214, 210], node: [233, 240, 238],
+    owe: [168, 70, 15], accent: [14, 124, 102]
+  };
+
+  /** Top and bottom of the drawn graph in graph units, with room for labels above and below the boxes. */
+  function graphExtent() {
+    const ys = Object.values(graphPositions()).map((p) => p.y);
+    const room = GRAPH.nodeHalfHeight + 16;
+    return { minY: Math.min(...ys) - room, maxY: Math.max(...ys) + room };
+  }
+
+  /**
+   * Draws one graph step with its top left corner at (left, top), using the
+   * same layout as the page, cropped to the boxes. Returns its height in points.
+   */
+  function drawPdfGraph(doc, step, summary, left, top) {
+    const k = PDF_GRAPH_SCALE;
+    const { minY, maxY } = graphExtent();
+    const X = (v) => left + v * k, Y = (v) => top + (v - minY) * k;
+    const isFinal = step === 3;
+    const halfW = graphHalfWidth(trip.people.length);
+    const positions = graphPositions();
+    const color = isFinal ? PDF_COLORS.accent : PDF_COLORS.owe;
+
+    for (const arrow of graphArrows(step, summary)) {
+      const g = arrowGeometry(arrow, positions, halfW);
+      const x1 = X(g.x1), y1 = Y(g.y1), x2 = X(g.x2), y2 = Y(g.y2);
+      const len = Math.hypot(x2 - x1, y2 - y1) || 1;
+      const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+      const head = isFinal ? 7 : 5.5, spread = head * 0.6;
+
+      doc.setDrawColor(...color).setLineWidth(isFinal ? 1.6 : 1).setLineCap("round").setLineJoin("round");
+      doc.line(x1, y1, x2, y2);
+      // Open arrowhead, matching the page's marker
+      doc.lines([[-ux * head - uy * spread, -uy * head + ux * spread]], x2, y2);
+      doc.lines([[-ux * head + uy * spread, -uy * head - ux * spread]], x2, y2);
+
+      doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(...PDF_COLORS.ink);
+      const align = g.anchor === "start" ? "left" : g.anchor === "end" ? "right" : "center";
+      doc.text(pdfText(arrow.label), X(g.labelX), Y(g.labelY), { align, baseline: "middle" });
+    }
+
+    const boxH = GRAPH.nodeHalfHeight;
+    for (const p of trip.people) {
+      const { x, y } = positions[p.id];
+      const { name, balance } = nodeText(p, halfW, summary.net[p.id]);
+      doc.setFillColor(...PDF_COLORS.node).setDrawColor(...PDF_COLORS.line).setLineWidth(0.6);
+      doc.roundedRect(X(x - halfW), Y(y - boxH), halfW * 2 * k, boxH * 2 * k, 8 * k, 8 * k, "FD");
+      doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(...PDF_COLORS.ink);
+      doc.text(pdfText(name), X(x), Y(y - 7), { align: "center", baseline: "middle" });
+      doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(...PDF_COLORS.muted);
+      doc.text(pdfText(balance), X(x), Y(y + 10), { align: "center", baseline: "middle" });
+    }
+    doc.setTextColor(0);
+    return (maxY - minY) * k;
+  }
+
+  function buildPdf(lib) {
+    const doc = new lib.jsPDF({ unit: "pt", format: "letter" });
+    const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
+    const margin = 54, width = pageW - 2 * margin;
+    const fontSize = 10.5, lineH = fontSize * 1.3, padX = 8, padY = 6;
+    let y = margin;
+
+    const summary = summarize();
+    const total = sum(trip.expenses.map((e) => e.amount));
+
+    /** Starts a new page if `h` more points will not fit. Returns true when it did. */
+    const ensure = (h) => {
+      if (y + h <= pageH - margin) return false;
+      doc.addPage();
+      y = margin;
+      return true;
+    };
+
+    const heading = (text) => {
+      ensure(60);
+      doc.setFont("helvetica", "bold").setFontSize(14).setTextColor(0);
+      doc.text(text, margin, y + 12);
+      y += 24;
+    };
+
+    /**
+     * Draws a table. Each column is { title, width (fraction), align, bold }.
+     * The header row repeats at the top of each new page.
+     */
+    const table = (columns, rows) => {
+      const widths = columns.map((c) => c.width * width);
+      const xs = widths.map((_, i) => margin + sum(widths.slice(0, i)));
+      const textX = (i) => columns[i].align === "right" ? xs[i] + widths[i] - padX : xs[i] + padX;
+
+      const drawRow = (cells, { header = false, band = false, bold = false } = {}) => {
+        doc.setFontSize(fontSize);
+        const lines = cells.map((cell, i) => {
+          doc.setFont("helvetica", header || bold || columns[i].bold ? "bold" : "normal");
+          return doc.splitTextToSize(pdfText(cell), widths[i] - 2 * padX);
+        });
+        const h = Math.max(...lines.map((l) => l.length)) * lineH + 2 * padY;
+        if (!header && ensure(h)) drawRow(columns.map((c) => c.title), { header: true });
+
+        if (header) doc.setFillColor(222, 236, 232).rect(margin, y, width, h, "F");
+        else if (band) doc.setFillColor(244, 248, 247).rect(margin, y, width, h, "F");
+        doc.setDrawColor(200).setLineWidth(0.5).line(margin, y + h, margin + width, y + h);
+
+        lines.forEach((cellLines, i) => {
+          doc.setFont("helvetica", header || bold || columns[i].bold ? "bold" : "normal");
+          doc.setTextColor(header ? 40 : 0);
+          doc.text(cellLines, textX(i), y + padY + fontSize * 0.9, {
+            align: columns[i].align === "right" ? "right" : "left",
+            lineHeightFactor: 1.3
+          });
+        });
+        y += h;
+      };
+
+      ensure(lineH * 2 + 4 * padY);
+      drawRow(columns.map((c) => c.title), { header: true });
+      rows.forEach((row, i) => drawRow(row.cells, { band: i % 2 === 1, bold: row.bold }));
+      y += 22;
+    };
+
+    // Title and overview
+    doc.setFont("helvetica", "bold").setFontSize(22);
+    const title = doc.splitTextToSize(pdfText(trip.name.trim() || "Trip"), width);
+    doc.text(title, margin, y + 18, { lineHeightFactor: 1.2 });
+    y += 18 + (title.length - 1) * 26 + 10;
+
+    doc.setFont("helvetica", "normal").setFontSize(11).setTextColor(90);
+    const overview = trip.expenses.length
+      ? `${plural(trip.expenses.length, "expense", "expenses")}, ${fmt(total)} in total, ${plural(trip.people.length, "person", "people")}`
+      : `No expenses yet, ${plural(trip.people.length, "person", "people")}`;
+    doc.text(pdfText(overview), margin, y + 11);
+    y += 16;
+    doc.text(pdfText(`Made ${new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`), margin, y + 11);
+    y += 34;
+
+    // How it adds up: the three graph steps, each beside its explanation
+    heading("How it adds up");
+    if (trip.people.length < 2 || !trip.expenses.length) {
+      doc.setFont("helvetica", "normal").setFontSize(fontSize).setTextColor(0);
+      doc.text("Add at least two people and an expense to see how the payments work out.", margin, y + 10);
+      y += 36;
+    } else {
+      const { minY, maxY } = graphExtent();
+      const graphH = (maxY - minY) * PDF_GRAPH_SCALE;
+      const textX = margin + GRAPH.width * PDF_GRAPH_SCALE + 16, textW = pageW - margin - textX;
+      for (const step of [1, 2, 3]) {
+        ensure(graphH);
+        const arrows = graphArrows(step, summary);
+        const [one, many] = GRAPH_STEPS[step].unit;
+
+        doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(0);
+        doc.text(`${step}. ${GRAPH_STEPS[step].button}`, textX, y + 12);
+        doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(90);
+        doc.text(arrows.length ? plural(arrows.length, one, many) : "Nothing to settle", textX, y + 28);
+        doc.setTextColor(0);
+        const note = doc.splitTextToSize(GRAPH_STEPS[step].note, textW);
+        doc.text(note, textX, y + 48, { lineHeightFactor: 1.35 });
+        const textH = 48 + (note.length - 1) * 10 * 1.35 + 6;
+
+        y += Math.max(drawPdfGraph(doc, step, summary, margin, y), textH) + 24;
+      }
+      y += 18;
+    }
+
+    // Balances
+    if (trip.people.length) {
+      heading("Balances");
+      table(
+        [
+          { title: "Person", width: 0.34 },
+          { title: "Paid", width: 0.22, align: "right" },
+          { title: "Share", width: 0.22, align: "right" },
+          { title: "Net", width: 0.22, align: "right", bold: true }
+        ],
+        trip.people.map((p) => ({
+          cells: [p.name, fmt(summary.paid[p.id]), fmt(summary.owed[p.id]), fmtSigned(summary.net[p.id])]
+        }))
+      );
+      y -= 12;   // tuck the footnote under the table
+      ensure(14);
+      doc.setFont("helvetica", "normal").setFontSize(9.5).setTextColor(90);
+      doc.text("A positive net means the group owes that person. A negative net means they owe the group.", margin, y + 10);
+      y += 34;
+    }
+
+    // Expenses
+    if (trip.expenses.length) {
+      heading("Expenses");
+      const rows = trip.expenses.map((e) => {
+        const names = trip.people.filter((p) => e.participants.includes(p.id)).map((p) => p.name);
+        const split = names.length === trip.people.length ? "Everyone" : names.join(", ");
+        return { cells: [e.desc, personName(e.paidBy), split, fmt(e.amount)] };
+      });
+      rows.push({ cells: ["Total", "", "", fmt(total)], bold: true });
+      table(
+        [
+          { title: "Expense", width: 0.3 },
+          { title: "Paid by", width: 0.2 },
+          { title: "Split between", width: 0.32 },
+          { title: "Amount", width: 0.18, align: "right" }
+        ],
+        rows
+      );
+    }
+
+    // Page numbers
+    const pages = doc.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(120);
+      doc.text(`Page ${i} of ${pages}`, pageW - margin, pageH - margin / 2, { align: "right" });
+    }
+    return doc;
+  }
+
+  function downloadPdf() {
+    if (!trip.people.length) { toast("Add people and expenses first."); return; }
+    const save = (lib) => {
+      buildPdf(lib).save(`${tripSlug()}-summary.pdf`);
+      toast("PDF downloaded.");
+    };
+    if (window.jspdf) { save(window.jspdf); return; }
+    toast("Preparing the PDF...");
+    loadJsPDF().then(save, () => toast("Could not load the PDF maker. Check your connection and try again."));
   }
 
   function loadBackup(file) {
@@ -1302,6 +1541,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
 
   // Save and share dialog
   $("copy-link").addEventListener("click", copyShareLink);
+  $("export-pdf").addEventListener("click", downloadPdf);
   $("export").addEventListener("click", downloadBackup);
   $("import-btn").addEventListener("click", () => $("import-file").click());
   $("import-file").addEventListener("change", (event) => {
