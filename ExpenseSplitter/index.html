@@ -265,6 +265,13 @@ button.lane-person.on { background: var(--accent); color: var(--accent-ink); bor
 .graph-name { font: 800 14px var(--font); fill: var(--ink); }
 .graph-net { font: 500 12px var(--font); fill: var(--muted); }
 .graph-amount { font: 700 13px var(--font); fill: var(--ink); font-variant-numeric: tabular-nums; }
+.ledger { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-top: 12px; }
+.ledger-card { padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+.ledger-name { font-weight: 800; margin-bottom: 4px; overflow-wrap: anywhere; }
+.ledger-line { display: flex; justify-content: space-between; gap: 10px; font-size: 0.88rem; line-height: 1.5; }
+.ledger-line span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.ledger-line span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ledger-net { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); font-weight: 700; }
 
 /* =========================================================
    8. Dialogs and forms inside them
@@ -943,16 +950,42 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     }
 
     // Step 2: net each pair once.
-    const people = trip.people;
+    return netPairs().map((d) => ({ from: d.from, to: d.to, offset: 0, label: fmt(d.amount) }));
+  }
+
+  /** What each pair of people owes once their debts to each other cancel out, as { from, to, amount }. */
+  function netPairs() {
+    const debts = debtsByPair();
+    const owed = (from, to) => sum((debts[from] && debts[from][to]) || []);
+    const people = trip.people, pairs = [];
     for (let i = 0; i < people.length; i++) {
       for (let j = i + 1; j < people.length; j++) {
         const a = people[i].id, b = people[j].id;
-        const diff = sum(owedList(a, b)) - sum(owedList(b, a));
-        if (diff > 0) arrows.push({ from: a, to: b, offset: 0, label: fmt(diff) });
-        if (diff < 0) arrows.push({ from: b, to: a, offset: 0, label: fmt(-diff) });
+        const diff = owed(a, b) - owed(b, a);
+        if (diff > 0) pairs.push({ from: a, to: b, amount: diff });
+        if (diff < 0) pairs.push({ from: b, to: a, amount: -diff });
       }
     }
-    return arrows;
+    return pairs;
+  }
+
+  /**
+   * For each person, what they owe or are owed by each other person after
+   * netting by pair, and their net. Lines are { text, amount, owes }.
+   */
+  function pairBreakdown(summary) {
+    const pairs = netPairs();
+    return trip.people.map((p) => {
+      const lines = [];
+      for (const other of trip.people) {
+        const out = pairs.find((d) => d.from === p.id && d.to === other.id);
+        const into = pairs.find((d) => d.from === other.id && d.to === p.id);
+        if (out) lines.push({ text: `Owes ${other.name}`, amount: out.amount, owes: true });
+        if (into) lines.push({ text: `Owed by ${other.name}`, amount: into.amount, owes: false });
+      }
+      const net = summary.net[p.id];
+      return { person: p, lines, net, netText: net < 0 ? "Net: owes" : net > 0 ? "Net: is owed" : "Net: even" };
+    });
   }
 
   /** Places people evenly around an oval, starting top left. */
@@ -1170,7 +1203,20 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     el.innerHTML = `
       <div class="step-bar" role="group" aria-label="Graph step">${buttons}<span class="step-count">${count}</span></div>
       ${svg}
-      <p class="note">${GRAPH_STEPS[step].note}</p>`;
+      <p class="note">${GRAPH_STEPS[step].note}</p>
+      ${step === 2 ? ledgerHtml(summary) : ""}`;
+  }
+
+  /** Cards under the netted graph: who each person owes or is owed by, and their net. */
+  function ledgerHtml(summary) {
+    const amount = (cents, owes) => `<span class="${owes ? "neg" : "pos"}">${fmt(cents)}</span>`;
+    return '<div class="ledger">' + pairBreakdown(summary).map((b) => `
+      <div class="ledger-card">
+        <div class="ledger-name">${esc(b.person.name)}</div>
+        ${b.lines.map((l) => `<div class="ledger-line"><span>${esc(l.text)}</span>${amount(l.amount, l.owes)}</div>`).join("")
+          || '<div class="ledger-line"><span>Nothing owed either way</span></div>'}
+        <div class="ledger-line ledger-net"><span>${b.netText}</span>${b.net ? amount(Math.abs(b.net), b.net < 0) : ""}</div>
+      </div>`).join("") + "</div>";
   }
 
   /* =========================================================
@@ -1520,6 +1566,59 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       y += 22;
     };
 
+    /**
+     * Cards under the netted graph, three to a row: who each person owes or is
+     * owed by, and their net. A row moves to the next page when it will not fit.
+     */
+    const drawLedger = () => {
+      const cols = 3, gap = 10, cardW = (width - gap * (cols - 1)) / cols, pad = 8, line = 13;
+      const cards = pairBreakdown(summary);
+      const amountColor = (owes) => (owes ? PDF_COLORS.owe : PDF_COLORS.accent);
+      for (let i = 0; i < cards.length; i += cols) {
+        const row = cards.slice(i, i + cols);
+        const h = pad * 2 + 15 + Math.max(...row.map((c) => Math.max(c.lines.length, 1))) * line + 18;
+        ensure(h);
+        row.forEach((c, k) => {
+          const x = margin + k * (cardW + gap), right = x + cardW - pad;
+          doc.setFillColor(...PDF_COLORS.node).setDrawColor(...PDF_COLORS.line).setLineWidth(0.6);
+          doc.roundedRect(x, y, cardW, h, 5, 5, "FD");
+          /** Shortens text with "..." until it fits `room` points in the current font. */
+          const fit = (text, room) => {
+            let t = pdfText(text);
+            while (t.length > 1 && doc.getTextWidth(t) > room) t = t.slice(0, -4) + "...";
+            return t;
+          };
+          let ly = y + pad + 9;
+          doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(...PDF_COLORS.ink);
+          doc.text(fit(c.person.name, cardW - 2 * pad), x + pad, ly);
+          ly += 15;
+          doc.setFontSize(9);
+          const lineRow = (text, cents, owes, bold) => {
+            const money = cents ? pdfText(fmt(cents)) : "";
+            doc.setFont("helvetica", "bold");
+            const moneyW = money ? doc.getTextWidth(money) + 6 : 0;
+            doc.setFont("helvetica", bold ? "bold" : "normal").setTextColor(...PDF_COLORS.ink);
+            doc.text(fit(text, cardW - 2 * pad - moneyW), x + pad, ly);
+            if (money) {
+              doc.setFont("helvetica", "bold").setTextColor(...amountColor(owes));
+              doc.text(money, right, ly, { align: "right" });
+            }
+            ly += line;
+          };
+          if (!c.lines.length) lineRow("Nothing owed either way", 0);
+          c.lines.forEach((l) => lineRow(l.text, l.amount, l.owes));
+          // Net, below a rule at the bottom of the card
+          const netY = y + h - pad - 4;
+          doc.setDrawColor(...PDF_COLORS.line).line(x + pad, netY - 12, right, netY - 12);
+          ly = netY;
+          lineRow(c.netText, Math.abs(c.net), c.net < 0, true);
+        });
+        y += h + gap;
+      }
+      doc.setTextColor(0);
+      y += 14;
+    };
+
     // Title and overview
     doc.setFont("helvetica", "bold").setFontSize(22);
     const title = doc.splitTextToSize(pdfText(trip.name.trim() || "Trip"), width);
@@ -1613,6 +1712,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
         const textH = 48 + (note.length - 1) * 10 * 1.35 + 6;
 
         y += Math.max(drawPdfGraph(doc, step, summary, margin, y), textH) + 24;
+        if (step === 2) drawLedger();
       }
       y += 18;
     }
