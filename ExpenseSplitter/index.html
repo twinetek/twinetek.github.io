@@ -435,7 +435,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       <button type="button" id="reset" class="danger">Start a new trip</button>
     </div>
     <input type="file" id="import-file" accept="application/json,.json" class="hidden">
-    <p class="note">The PDF is a printable summary: the three How it adds up graphs, everyone's balance, and every expense.</p>
+    <p class="note">The PDF is a printable summary: every expense, everyone's balance, and the three How it adds up graphs.</p>
     <p class="note">Your trip is saved automatically in this browser. The share link holds the whole trip in the link itself, so anyone with the link can see it. Sharing does not sync: to pass on changes, send a new link or backup.</p>
   </div>
 </dialog>
@@ -1433,33 +1433,24 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     doc.text(pdfText(`Made ${new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`), margin, y + 11);
     y += 34;
 
-    // How it adds up: the three graph steps, each beside its explanation
-    heading("How it adds up");
-    if (trip.people.length < 2 || !trip.expenses.length) {
-      doc.setFont("helvetica", "normal").setFontSize(fontSize).setTextColor(0);
-      doc.text("Add at least two people and an expense to see how the payments work out.", margin, y + 10);
-      y += 36;
-    } else {
-      const { minY, maxY } = graphExtent();
-      const graphH = (maxY - minY) * PDF_GRAPH_SCALE;
-      const textX = margin + GRAPH.width * PDF_GRAPH_SCALE + 16, textW = pageW - margin - textX;
-      for (const step of [1, 2, 3]) {
-        ensure(graphH);
-        const arrows = graphArrows(step, summary);
-        const [one, many] = GRAPH_STEPS[step].unit;
-
-        doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(0);
-        doc.text(`${step}. ${GRAPH_STEPS[step].button}`, textX, y + 12);
-        doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(90);
-        doc.text(arrows.length ? plural(arrows.length, one, many) : "Nothing to settle", textX, y + 28);
-        doc.setTextColor(0);
-        const note = doc.splitTextToSize(GRAPH_STEPS[step].note, textW);
-        doc.text(note, textX, y + 48, { lineHeightFactor: 1.35 });
-        const textH = 48 + (note.length - 1) * 10 * 1.35 + 6;
-
-        y += Math.max(drawPdfGraph(doc, step, summary, margin, y), textH) + 24;
-      }
-      y += 18;
+    // Expenses
+    if (trip.expenses.length) {
+      heading("Expenses");
+      const rows = trip.expenses.map((e) => {
+        const names = trip.people.filter((p) => e.participants.includes(p.id)).map((p) => p.name);
+        const split = names.length === trip.people.length ? "Everyone" : names.join(", ");
+        return { cells: [e.desc, personName(e.paidBy), split, fmt(e.amount)] };
+      });
+      rows.push({ cells: ["Total", "", "", fmt(total)], bold: true });
+      table(
+        [
+          { title: "Expense", width: 0.3 },
+          { title: "Paid by", width: 0.2 },
+          { title: "Split between", width: 0.32 },
+          { title: "Amount", width: 0.18, align: "right" }
+        ],
+        rows
+      );
     }
 
     // Balances
@@ -1483,24 +1474,35 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       y += 34;
     }
 
-    // Expenses
-    if (trip.expenses.length) {
-      heading("Expenses");
-      const rows = trip.expenses.map((e) => {
-        const names = trip.people.filter((p) => e.participants.includes(p.id)).map((p) => p.name);
-        const split = names.length === trip.people.length ? "Everyone" : names.join(", ");
-        return { cells: [e.desc, personName(e.paidBy), split, fmt(e.amount)] };
-      });
-      rows.push({ cells: ["Total", "", "", fmt(total)], bold: true });
-      table(
-        [
-          { title: "Expense", width: 0.3 },
-          { title: "Paid by", width: 0.2 },
-          { title: "Split between", width: 0.32 },
-          { title: "Amount", width: 0.18, align: "right" }
-        ],
-        rows
-      );
+    // How it adds up: the three graph steps, each beside its explanation
+    if (trip.people.length < 2 || !trip.expenses.length) {
+      heading("How it adds up");
+      doc.setFont("helvetica", "normal").setFontSize(fontSize).setTextColor(0);
+      doc.text("Add at least two people and an expense to see how the payments work out.", margin, y + 10);
+      y += 36;
+    } else {
+      const { minY, maxY } = graphExtent();
+      const graphH = (maxY - minY) * PDF_GRAPH_SCALE;
+      ensure(24 + graphH);   // keep the heading with the first graph
+      heading("How it adds up");
+      const textX = margin + GRAPH.width * PDF_GRAPH_SCALE + 16, textW = pageW - margin - textX;
+      for (const step of [1, 2, 3]) {
+        ensure(graphH);
+        const arrows = graphArrows(step, summary);
+        const [one, many] = GRAPH_STEPS[step].unit;
+
+        doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(0);
+        doc.text(`${step}. ${GRAPH_STEPS[step].button}`, textX, y + 12);
+        doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(90);
+        doc.text(arrows.length ? plural(arrows.length, one, many) : "Nothing to settle", textX, y + 28);
+        doc.setTextColor(0);
+        const note = doc.splitTextToSize(GRAPH_STEPS[step].note, textW);
+        doc.text(note, textX, y + 48, { lineHeightFactor: 1.35 });
+        const textH = 48 + (note.length - 1) * 10 * 1.35 + 6;
+
+        y += Math.max(drawPdfGraph(doc, step, summary, margin, y), textH) + 24;
+      }
+      y += 18;
     }
 
     // Page numbers
