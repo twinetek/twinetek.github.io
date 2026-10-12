@@ -810,7 +810,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     nodeHalfHeight: 22,
     arrowGap: 7,       // space between an arrow tip and a box
     pairOffset: 9,     // two arrows between the same people sit this far apart
-    labelGap: 15       // amount labels sit this far beside their arrow
+    labelGap: 11       // amount labels sit this far beside their arrow
   };
 
   const GRAPH_STEPS = {
@@ -902,8 +902,9 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
   }
 
   /**
-   * Where to draw one arrow and its label, in graph units.
-   * Returns { x1, y1, x2, y2, labelX, labelY, anchor } with anchor "start", "middle", or "end".
+   * Where to draw one arrow, in graph units: the trimmed line from (x1, y1) to
+   * (x2, y2), plus what its label needs. The label turns `angle` degrees
+   * clockwise and sits on the side given by (sideX, sideY).
    */
   function arrowGeometry(arrow, positions, halfW) {
     const a = positions[arrow.from], b = positions[arrow.to];
@@ -919,40 +920,104 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     const t0 = leaveA ? leaveA[1] : 0;
     const t1 = enterB ? enterB[0] : length;
 
-    // Put the label beside the line: on its own side for parallel arrows,
-    // otherwise above a sloped line or right of a vertical one.
-    const side = arrow.offset
-      ? Math.sign(arrow.offset)
-      : Math.abs(ny) > 1e-9 ? (ny < 0 ? 1 : -1) : (nx > 0 ? 1 : -1);
-    const distance = Math.abs(arrow.offset) + GRAPH.labelGap;
-    const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
-    let labelX = midX + nx * side * distance;
-    let labelY = midY + ny * side * distance;
-    let anchor = "middle";
-    const sideways = nx * side;
-    if (Math.abs(sideways) > 0.6) {   // mostly vertical line: align text to the side
-      anchor = sideways > 0 ? "start" : "end";
-      labelX = midX + (sideways > 0 ? 10 : -10);
-      labelY = midY;
-    }
+    // The label runs along the arrow, turned so it never reads upside down.
+    let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    if (angle >= 90) angle -= 180;
+    if (angle < -90) angle += 180;
+
+    // It goes on the arrow's own side for parallel arrows, otherwise above the text.
+    const rad = angle * Math.PI / 180;
+    const side = arrow.offset ? Math.sign(arrow.offset) : Math.sign(nx * Math.sin(rad) - ny * Math.cos(rad)) || 1;
 
     return {
       x1: start.x + dx * t0, y1: start.y + dy * t0,
       x2: start.x + dx * t1, y2: start.y + dy * t1,
-      labelX, labelY, anchor
+      dx, dy, sideX: nx * side, sideY: ny * side, angle
     };
   }
 
+  /** True when two rotated rectangles { cx, cy, ux, uy, hw, hh } overlap. */
+  function rectsOverlap(p, q) {
+    for (const [ax, ay] of [[p.ux, p.uy], [-p.uy, p.ux], [q.ux, q.uy], [-q.uy, q.ux]]) {
+      const reach = (r) => r.hw * Math.abs(r.ux * ax + r.uy * ay) + r.hh * Math.abs(-r.uy * ax + r.ux * ay);
+      if (Math.abs((q.cx - p.cx) * ax + (q.cy - p.cy) * ay) >= reach(p) + reach(q)) return false;
+    }
+    return true;
+  }
+
+  /** Spots along an arrow to try for its label, as fractions from start to tip. */
+  const LABEL_SPOTS = [0.5, 0.62, 0.38, 0.74, 0.26, 0.84, 0.16];
+
+  /**
+   * Lays out every arrow and its label for one graph. `measure(text)` gives a
+   * label's { w, h } in graph units at full size. Each label shrinks to fit
+   * its arrow if needed, then takes the first spot along the arrow that
+   * clears the boxes and the labels already placed (longest labels go first).
+   * Returns one geometry per arrow, with labelX, labelY, and scale added.
+   */
+  function layoutArrows(arrows, positions, halfW, measure) {
+    const boxes = Object.values(positions).map((p) => ({
+      cx: p.x, cy: p.y, ux: 1, uy: 0, hw: halfW, hh: GRAPH.nodeHalfHeight
+    }));
+    const placed = [];
+    const geoms = arrows.map((arrow) => arrowGeometry(arrow, positions, halfW));
+    const order = arrows.map((_, i) => i)
+      .sort((i, j) => measure(arrows[j].label).w - measure(arrows[i].label).w);
+
+    for (const i of order) {
+      const g = geoms[i];
+      const room = Math.hypot(g.x2 - g.x1, g.y2 - g.y1);
+      const size = measure(arrows[i].label);
+      g.scale = Math.max(0.6, Math.min(1, (room - 6) / size.w));
+      const hw = size.w * g.scale / 2 + 3, hh = size.h * g.scale / 2 + 1;   // with a little padding
+      const lift = GRAPH.labelGap - (1 - g.scale) * size.h / 2;   // smaller text sits closer
+      const rad = g.angle * Math.PI / 180;
+
+      // Keep the label's ends on the line when it is long enough to allow it.
+      // A lone arrow may also use its other side; a parallel one keeps to its own.
+      // Only when every spot is taken does the label move farther from its line.
+      const lo = Math.min(hw / room, 0.5), hi = 1 - lo;
+      const sides = arrows[i].offset ? [1] : [1, -1];
+      let best = null;
+      search:
+      for (const reach of [lift, lift + hh * 2]) {
+        for (const s of sides) {
+          for (const f of LABEL_SPOTS) {
+            const t = Math.min(hi, Math.max(lo, f)) * room;
+            const rect = {
+              cx: g.x1 + g.dx * t + g.sideX * reach * s, cy: g.y1 + g.dy * t + g.sideY * reach * s,
+              ux: Math.cos(rad), uy: Math.sin(rad), hw, hh
+            };
+            const hits = boxes.concat(placed).filter((o) => rectsOverlap(rect, o)).length;
+            if (!best || hits < best.hits) best = { rect, hits };
+            if (!hits) break search;
+          }
+        }
+      }
+      placed.push(best.rect);
+      g.labelX = best.rect.cx;
+      g.labelY = best.rect.cy;
+    }
+    return geoms;
+  }
+
+  /** Rough label size on the page: digits and $ are wide, punctuation and spaces narrow. */
+  const svgLabelSize = (text) => ({
+    w: [...text].reduce((w, c) => w + (/[0-9$+]/.test(c) ? 7.4 : 3.6), 0),
+    h: 13
+  });
+
   /** SVG for one arrow and its amount label. */
-  function arrowSvg(arrow, positions, halfW, isFinal) {
-    const g = arrowGeometry(arrow, positions, halfW);
+  function arrowSvg(arrow, g, isFinal) {
     const color = isFinal ? "var(--accent)" : "var(--owe)";
     const marker = isFinal ? "arrow-final" : "arrow-debt";
+    const lx = g.labelX.toFixed(1), ly = g.labelY.toFixed(1);
+    const size = g.scale < 1 ? ` style="font-size:${(13 * g.scale).toFixed(1)}px"` : "";
     return `
       <line x1="${g.x1.toFixed(1)}" y1="${g.y1.toFixed(1)}" x2="${g.x2.toFixed(1)}" y2="${g.y2.toFixed(1)}"
             style="stroke:${color}" stroke-width="${isFinal ? 2.5 : 1.5}" marker-end="url(#${marker})"/>
-      <text class="graph-amount" x="${g.labelX.toFixed(1)}" y="${g.labelY.toFixed(1)}"
-            text-anchor="${g.anchor}" dominant-baseline="central">${esc(arrow.label)}</text>`;
+      <text class="graph-amount" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central"
+            transform="rotate(${g.angle.toFixed(1)} ${lx} ${ly})"${size}>${esc(arrow.label)}</text>`;
   }
 
   /** SVG for one person's box. */
@@ -987,11 +1052,12 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     const halfW = graphHalfWidth(n);
     const positions = graphPositions();
     const arrows = graphArrows(step, summary);
+    const geoms = layoutArrows(arrows, positions, halfW, svgLabelSize);
 
     const svg = `
       <svg viewBox="0 0 ${GRAPH.width} ${GRAPH.height}" role="img" aria-label="Arrows showing who pays whom">
         <defs>${arrowMarker("arrow-debt", "var(--owe)")}${arrowMarker("arrow-final", "var(--accent)")}</defs>
-        ${arrows.map((arrow) => arrowSvg(arrow, positions, halfW, isFinal)).join("")}
+        ${arrows.map((arrow, i) => arrowSvg(arrow, geoms[i], isFinal)).join("")}
         ${trip.people.map((p) => personSvg(p, positions[p.id], halfW, summary.net[p.id])).join("")}
       </svg>`;
 
@@ -1244,8 +1310,15 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     const positions = graphPositions();
     const color = isFinal ? PDF_COLORS.accent : PDF_COLORS.owe;
 
-    for (const arrow of graphArrows(step, summary)) {
-      const g = arrowGeometry(arrow, positions, halfW);
+    // Labels are measured in the PDF font, then converted back to graph units.
+    const fontSize = 8;
+    doc.setFont("helvetica", "bold").setFontSize(fontSize);
+    const measure = (text) => ({ w: doc.getTextWidth(pdfText(text)) / k, h: fontSize / k });
+    const arrows = graphArrows(step, summary);
+    const geoms = layoutArrows(arrows, positions, halfW, measure);
+
+    arrows.forEach((arrow, i) => {
+      const g = geoms[i];
       const x1 = X(g.x1), y1 = Y(g.y1), x2 = X(g.x2), y2 = Y(g.y2);
       const len = Math.hypot(x2 - x1, y2 - y1) || 1;
       const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
@@ -1257,10 +1330,14 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       doc.lines([[-ux * head - uy * spread, -uy * head + ux * spread]], x2, y2);
       doc.lines([[-ux * head + uy * spread, -uy * head - ux * spread]], x2, y2);
 
-      doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(...PDF_COLORS.ink);
-      const align = g.anchor === "start" ? "left" : g.anchor === "end" ? "right" : "center";
-      doc.text(pdfText(arrow.label), X(g.labelX), Y(g.labelY), { align, baseline: "middle" });
-    }
+      // Rotated text is placed from its baseline start, so step back half its
+      // width along the arrow and down half its height to center it.
+      const label = pdfText(arrow.label), size = fontSize * g.scale;
+      doc.setFont("helvetica", "bold").setFontSize(size).setTextColor(...PDF_COLORS.ink);
+      const rad = g.angle * Math.PI / 180, cos = Math.cos(rad), sin = Math.sin(rad);
+      const half = doc.getTextWidth(label) / 2, drop = size * 0.35;
+      doc.text(label, X(g.labelX) - cos * half - sin * drop, Y(g.labelY) - sin * half + cos * drop, { angle: -g.angle });
+    });
 
     const boxH = GRAPH.nodeHalfHeight;
     for (const p of trip.people) {
