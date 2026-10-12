@@ -23,9 +23,11 @@
   --danger: #b3261e;
   --radius: 10px;
   --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;   /* tells the browser which theme its own controls, like the calendar, should use */
 }
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
     --bg: #0f1a22;
     --panel: #17252f;
     --ink: #e6eef0;
@@ -99,7 +101,7 @@ button.small { min-height: 36px; padding: 0 12px; font-size: 0.85rem; }
 }
 
 label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
-input[type=text], input[type=number], select {
+input[type=text], input[type=number], input[type=date], select {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
@@ -109,6 +111,9 @@ input[type=text], input[type=number], select {
   border: 1px solid var(--line);
   border-radius: 8px;
 }
+/* The whole date field opens the calendar, so it looks clickable. */
+input[type=date] { cursor: pointer; }
+input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; padding: 4px; }
 input:focus-visible, select:focus-visible, button:focus-visible, .check:focus-within {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
@@ -123,6 +128,9 @@ input:focus-visible, select:focus-visible, button:focus-visible, .check:focus-wi
 .tools { display: flex; gap: 10px; flex-wrap: wrap; }
 .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
 .label-row label { margin: 0; }
+.sort-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+.sort-label { color: var(--muted); font-size: 0.85rem; margin-right: 2px; }
+.sort-hint { flex-basis: 100%; color: var(--muted); font-size: 0.8rem; }
 
 /* =========================================================
    4. Header and menu
@@ -194,6 +202,13 @@ input:focus-visible, select:focus-visible, button:focus-visible, .check:focus-wi
   padding: 0 2px; text-align: center; font-weight: 700; font-size: 0.85rem;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+/* Names in the header are buttons that sort the rows by that person. */
+button.lane-person {
+  width: calc(100% - 4px); min-height: 32px; margin: 0 2px; border: 1px solid transparent; border-radius: 6px;
+  background: transparent; text-decoration: underline dotted; text-underline-offset: 3px;
+}
+button.lane-person:hover { border-color: var(--line); filter: none; }
+button.lane-person.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); text-decoration: none; }
 .lane-row.band { background: var(--bg); border-radius: 8px; }
 .lane-label { display: flex; flex-direction: column; min-width: 0; padding: 6px; }
 .lane-desc { font-weight: 600; font-size: 0.9rem; line-height: 1.2; overflow-wrap: anywhere; }
@@ -399,9 +414,15 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
         <input id="e-amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
       </div>
     </div>
-    <div class="field">
-      <label for="e-paid">Paid by</label>
-      <select id="e-paid"></select>
+    <div class="row stack-sm">
+      <div class="field grow-2">
+        <label for="e-paid">Paid by</label>
+        <select id="e-paid"></select>
+      </div>
+      <div class="field">
+        <label for="e-date">Date</label>
+        <input id="e-date" type="date">
+      </div>
     </div>
     <div class="field">
       <div class="label-row">
@@ -435,7 +456,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       <button type="button" id="reset" class="danger">Start a new trip</button>
     </div>
     <input type="file" id="import-file" accept="application/json,.json" class="hidden">
-    <p class="note">The PDF is a printable summary: every expense, everyone's balance, and the three How it adds up graphs.</p>
+    <p class="note">The PDF is a printable summary: every expense (in the order chosen under Expenses), everyone's balance, and the three How it adds up graphs.</p>
     <p class="note">Your trip is saved automatically in this browser. The share link holds the whole trip in the link itself, so anyone with the link can see it. Sharing does not sync: to pass on changes, send a new link or backup.</p>
   </div>
 </dialog>
@@ -463,6 +484,18 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
   const fmt = (cents) => currency.format(cents / 100);
   const fmtSigned = (cents) => (cents > 0 ? "+" : "") + fmt(cents);
 
+  /** Dates are stored as "YYYY-MM-DD" text, or "" when not set. */
+  const isDateText = (value) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    !Number.isNaN(new Date(value + "T00:00").getTime());
+  const todayText = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  /** Shows a stored date in the reader's format, read as a local date so it never shifts a day. */
+  const fmtDate = (text, withYear = true) => text
+    ? new Date(text + "T00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", ...(withYear && { year: "numeric" }) })
+    : "";
+
   const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
   /** Escapes text before it goes into an HTML string. */
   const esc = (value) => String(value).replace(/[&<>"']/g, (c) => ESCAPES[c]);
@@ -480,6 +513,8 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     editingId: null,          // expense being edited, or null when adding
     splitWith: new Set(),     // people ticked in the expense form
     graphStep: 1,             // 1 every debt, 2 netted by pair, 3 fewest payments
+    expenseSort: "date",      // order of the expense list: date, title, or payer
+    laneSort: "date",         // order of the lanes: date, title, or a person's id
     pendingShared: null       // trip from a share link, waiting for confirmation
   };
 
@@ -510,6 +545,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       expenses.push({
         id: e.id,
         desc: String(e.desc || "Expense").slice(0, 80),
+        date: isDateText(e.date) ? e.date : "",
         amount,
         paidBy: e.paidBy,
         participants
@@ -665,6 +701,53 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
   }
 
   /* =========================================================
+     Sorting
+     All sorts are stable, so ties keep the order expenses were added.
+     ========================================================= */
+
+  const byText = (a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
+  /** Oldest first, with undated expenses last. */
+  const byDate = (a, b) => (a.date && b.date) ? a.date.localeCompare(b.date) : Boolean(b.date) - Boolean(a.date);
+
+  const EXPENSE_SORTS = {
+    title: { button: "Title", compare: (a, b) => byText(a.desc, b.desc) },
+    date: { button: "Date", compare: byDate },
+    payer: { button: "Payer", compare: (a, b) => byText(personName(a.paidBy), personName(b.paidBy)) || byDate(a, b) }
+  };
+
+  /** What one expense means for one person: positive when they are owed, negative when they owe, null when not part of it. */
+  function personStake(expense, personId) {
+    const shares = splitExpense(expense);
+    const paid = expense.paidBy === personId ? expense.amount : 0;
+    if (!paid && !(personId in shares)) return null;
+    return paid - (shares[personId] || 0);
+  }
+
+  /** The expenses in a sort order: a key of EXPENSE_SORTS, or a person's id. */
+  function sortedExpenses(order) {
+    const list = trip.expenses.slice();
+    if (EXPENSE_SORTS[order]) {
+      return list.sort(EXPENSE_SORTS[order].compare);
+    }
+    // A person: most owed to them first, most they owe last, then expenses they are not part of.
+    const stakes = new Map(list.map((e) => [e.id, personStake(e, order)]));
+    return list.sort((a, b) => {
+      const x = stakes.get(a.id), y = stakes.get(b.id);
+      if (x === null || y === null) return (x === null) - (y === null);
+      return y - x;
+    });
+  }
+
+  /** Buttons for choosing a sort, marked with data-sort-group and data-sort. */
+  function sortBar(group, keys, current, hint = "") {
+    const buttons = keys.map((key) => {
+      const on = key === current;
+      return `<button type="button" class="small${on ? " on" : ""}" data-sort-group="${group}" data-sort="${key}" aria-pressed="${on}">${EXPENSE_SORTS[key].button}</button>`;
+    }).join("");
+    return `<div class="sort-bar" role="group" aria-label="Sort by"><span class="sort-label">Sort by</span>${buttons}${hint}</div>`;
+  }
+
+  /* =========================================================
      Rendering
      ========================================================= */
 
@@ -722,14 +805,16 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
       return;
     }
 
-    el.innerHTML = trip.expenses.map((e) => {
+    const bar = trip.expenses.length > 1 ? sortBar("expenses", ["date", "title", "payer"], ui.expenseSort) : "";
+    el.innerHTML = bar + sortedExpenses(ui.expenseSort).map((e) => {
       const names = trip.people.filter((p) => e.participants.includes(p.id)).map((p) => p.name);
       const split = names.length === trip.people.length ? "everyone" : names.join(", ");
+      const date = e.date ? `${esc(fmtDate(e.date))}. ` : "";
       return `
         <div class="expense">
           <div class="expense-main">
             <span class="expense-desc">${esc(e.desc)}</span>
-            <div class="expense-meta">${esc(personName(e.paidBy))} paid, split: ${esc(split)}</div>
+            <div class="expense-meta">${date}${esc(personName(e.paidBy))} paid, split: ${esc(split)}</div>
           </div>
           <span class="expense-amount">${fmt(e.amount)}</span>
           <div class="expense-btns">
@@ -756,10 +841,18 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     const gridStyle = `grid-template-columns: var(--label-w) repeat(${cols}, minmax(var(--col-w), 1fr))`;
     const row = (classes, cells) => `<div class="lane-row ${classes}" style="${gridStyle}">${cells}</div>`;
 
-    const header = row("lane-head", "<span></span>" +
-      people.map((p) => `<span class="lane-person" title="${esc(p.name)}">${esc(p.name)}</span>`).join(""));
+    // A person sort ends when that person is removed.
+    if (!EXPENSE_SORTS[ui.laneSort] && !people.some((p) => p.id === ui.laneSort)) ui.laneSort = "date";
+    const sortable = trip.expenses.length > 1;
 
-    const expenseRows = trip.expenses.map((e, index) => {
+    const header = row("lane-head", "<span></span>" + people.map((p) => {
+      if (!sortable) return `<span class="lane-person" title="${esc(p.name)}">${esc(p.name)}</span>`;
+      const on = ui.laneSort === p.id;
+      return `<button type="button" class="lane-person${on ? " on" : ""}" data-sort-group="lanes" data-sort="${esc(p.id)}"
+        aria-pressed="${on}" title="Sort by ${esc(p.name)}">${esc(p.name)}</button>`;
+    }).join(""));
+
+    const expenseRows = sortedExpenses(ui.laneSort).map((e, index) => {
       const shares = splitExpense(e);
       const involved = [];
       const cells = people.map((p, col) => {
@@ -776,7 +869,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
         ? `<span class="lane-link" style="--first:${first}; --last:${last}; --cols:${cols}"></span>`
         : "";
       const label = `<span class="lane-label"><span class="lane-desc">${esc(e.desc)}</span>` +
-        `<span class="lane-sub">${fmt(e.amount)}, paid by ${esc(personName(e.paidBy))}</span></span>`;
+        `<span class="lane-sub">${e.date ? esc(fmtDate(e.date, false)) + ". " : ""}${fmt(e.amount)}, paid by ${esc(personName(e.paidBy))}</span></span>`;
 
       return row(index % 2 ? "" : "band", link + label + cells);
     }).join("");
@@ -793,7 +886,12 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
         return `<span class="lane-value ${tone}">${fmtSigned(net)}</span>`;
       });
 
-    el.innerHTML = `
+    const bar = sortable
+      ? sortBar("lanes", ["date", "title"], ui.laneSort,
+          '<span class="sort-hint">Tap a name to sort by what that person is owed, down to what they owe.</span>')
+      : "";
+
+    el.innerHTML = `${bar}
       <div class="lanes">
         <div style="min-width: calc(var(--label-w) + ${cols} * var(--col-w))">${header}${expenseRows}${totals}</div>
       </div>
@@ -1129,6 +1227,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
   function resetExpenseForm() {
     $("e-desc").value = "";
     $("e-amount").value = "";
+    $("e-date").value = todayText();
     $("e-error").textContent = "";
     ui.editingId = null;
     ui.splitWith = new Set(allPeopleIds());
@@ -1139,6 +1238,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     ui.splitWith = new Set(expense.participants);
     $("e-desc").value = expense.desc;
     $("e-amount").value = (expense.amount / 100).toFixed(2);
+    $("e-date").value = expense.date;
     renderExpenseForm();
     $("e-paid").value = expense.paidBy;
     openDialog("dlg-expense");
@@ -1148,6 +1248,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     return {
       desc: $("e-desc").value.trim(),
       amount: Math.round(parseFloat($("e-amount").value) * 100),
+      date: isDateText($("e-date").value) ? $("e-date").value : "",
       paidBy: $("e-paid").value,
       participants: allPeopleIds().filter((id) => ui.splitWith.has(id))
     };
@@ -1158,6 +1259,7 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     if (!trip.people.length) return "Add at least one person first.";
     if (!input.desc) return "Enter what the expense was for.";
     if (!Number.isFinite(input.amount) || input.amount <= 0) return "Enter an amount greater than zero.";
+    if ($("e-date").validity.badInput) return "Finish the date, or clear it to leave the expense undated.";
     if (!input.paidBy) return "Choose who paid.";
     if (!input.participants.length) return "Choose at least one person to split with.";
     return "";
@@ -1433,22 +1535,32 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     doc.text(pdfText(`Made ${new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`), margin, y + 11);
     y += 34;
 
-    // Expenses
+    // Expenses, in the order chosen on the page. The Date column only shows when some expense has a date.
     if (trip.expenses.length) {
       heading("Expenses");
-      const rows = trip.expenses.map((e) => {
+      const dated = trip.expenses.some((e) => e.date);
+      const rows = sortedExpenses(ui.expenseSort).map((e) => {
         const names = trip.people.filter((p) => e.participants.includes(p.id)).map((p) => p.name);
         const split = names.length === trip.people.length ? "Everyone" : names.join(", ");
-        return { cells: [e.desc, personName(e.paidBy), split, fmt(e.amount)] };
+        const cells = [e.desc, personName(e.paidBy), split, fmt(e.amount)];
+        return { cells: dated ? [fmtDate(e.date), ...cells] : cells };
       });
-      rows.push({ cells: ["Total", "", "", fmt(total)], bold: true });
+      rows.push({ cells: [...(dated ? [""] : []), "Total", "", "", fmt(total)], bold: true });
       table(
-        [
-          { title: "Expense", width: 0.3 },
-          { title: "Paid by", width: 0.2 },
-          { title: "Split between", width: 0.32 },
-          { title: "Amount", width: 0.18, align: "right" }
-        ],
+        dated
+          ? [
+              { title: "Date", width: 0.17 },
+              { title: "Expense", width: 0.25 },
+              { title: "Paid by", width: 0.16 },
+              { title: "Split between", width: 0.26 },
+              { title: "Amount", width: 0.16, align: "right" }
+            ]
+          : [
+              { title: "Expense", width: 0.3 },
+              { title: "Paid by", width: 0.2 },
+              { title: "Split between", width: 0.32 },
+              { title: "Amount", width: 0.18, align: "right" }
+            ],
         rows
       );
     }
@@ -1598,6 +1710,11 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
   });
   $("split-all").addEventListener("click", () => { ui.splitWith = new Set(allPeopleIds()); renderExpenseForm(); });
   $("split-none").addEventListener("click", () => { ui.splitWith = new Set(); renderExpenseForm(); });
+  // Clicking anywhere on the date opens the calendar, not just its small icon.
+  // Older browsers without showPicker keep their usual behavior, and typing still works.
+  $("e-date").addEventListener("click", (event) => {
+    try { event.currentTarget.showPicker(); } catch { /* not supported here */ }
+  });
 
   // Expense list
   $("expenses").addEventListener("click", (event) => {
@@ -1608,6 +1725,24 @@ dialog::backdrop { background: rgba(8, 20, 28, 0.55); }
     if (!expense) return;
     if (editButton) startEditing(expense); else deleteExpense(expense);
   });
+
+  // Sort buttons in Expenses and Who shares what. Tapping the name that is
+  // already sorting the lanes goes back to sorting by date.
+  for (const id of ["expenses", "lanes"]) {
+    $(id).addEventListener("click", (event) => {
+      const button = event.target.closest("[data-sort-group]");
+      if (!button) return;
+      const key = button.dataset.sort;
+      if (button.dataset.sortGroup === "expenses") {
+        ui.expenseSort = key;
+        renderExpenseList();
+      } else {
+        ui.laneSort = !EXPENSE_SORTS[key] && ui.laneSort === key ? "date" : key;
+        renderLanes(summarize());
+      }
+      $(id).querySelector(`[data-sort-group][data-sort="${CSS.escape(key)}"]`)?.focus();
+    });
+  }
 
   // Graph step buttons (focus stays on the pressed button after redraw)
   $("graph").addEventListener("click", (event) => {
