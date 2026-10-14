@@ -34,7 +34,9 @@ frame.addEventListener('load', async () => {
   };
   const screen = () => q('#screen').dataset.screen;
   try {
+    const navLink = () => !!q('#nav [data-to="town"]');
     log(screen() === 'title', 'title screen shows');
+    log(!navLink(), 'no town link on the title screen');
     await click('[data-action="go"][data-to="create"]');
     log(screen() === 'create', 'create screen shows');
     await click('[data-action="reroll"]');
@@ -42,6 +44,7 @@ frame.addEventListener('load', async () => {
     await click('[data-action="begin"]');
     log(screen() === 'town' && q('#status').textContent.includes('Smoke'), 'new game starts in town with status bar');
     await click('[data-to="weapons"]');
+    log(navLink(), 'town link in the top bar at the weaponsmith');
     await click('[data-action="buy"][data-id="long-sword"]');
     log(q('#flash').textContent.includes('Long Sword'), 'bought a long sword');
     await click('[data-to="town"]');
@@ -54,6 +57,7 @@ frame.addEventListener('load', async () => {
     log(q('.foe-card h3').textContent === 'Kobold', 'selected the kobold');
     await click('[data-action="fight"][data-id="kobold"]');
     log(screen() === 'combat', 'combat screen shows');
+    log(!navLink(), 'no town link mid-fight');
     await click('[data-action="speed"][data-speed="instant"]');
     const stopInCombat = new URLSearchParams(location.search).get('stop') === 'combat';
     for (let i = 0; i < (stopInCombat ? 2 : 60) && q('[data-action="fight"]'); i++) {
@@ -82,6 +86,8 @@ frame.addEventListener('load', async () => {
       log(screen() === 'town', 'loaded slot 3');
       await click('[data-to="character"]');
       log(q('#screen').textContent.includes('Long Sword'), 'equipment screen lists the sword');
+      await click('#nav [data-to="town"]');
+      log(screen() === 'town' && !navLink(), 'top bar link returns to town');
     } else {
       await click('[data-action="leave"]');
       log(screen() === 'dead', 'death screen shows');

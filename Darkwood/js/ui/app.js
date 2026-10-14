@@ -29,7 +29,10 @@ const SCREENS = {
 // Screens that don't show the character status bar.
 const NO_STATUS = new Set(['title', 'create', 'dead']);
 
-export function createApp({ screenEl, statusEl, flashEl }) {
+// Screens that get a "Back to town" link in the top bar.
+const TOWN_LINK = new Set(['weapons', 'armor', 'magic', 'inn', 'character', 'arena', 'saves']);
+
+export function createApp({ screenEl, statusEl, flashEl, navEl }) {
   let state = null;
   let current = { name: 'title', params: {} };
   let flash = null;
@@ -87,6 +90,10 @@ export function createApp({ screenEl, statusEl, flashEl }) {
     screenEl.innerHTML = screen.render(ctx, current.params);
     screenEl.dataset.screen = current.name;
     statusEl.innerHTML = state?.character && !NO_STATUS.has(current.name) ? renderStatus(state) : '';
+    const inTown = state?.character && !state.character.dead && !state.combat;
+    navEl.innerHTML = inTown && TOWN_LINK.has(current.name)
+      ? '<button type="button" class="link" data-action="go" data-to="town">← Back to town</button>'
+      : '';
     flashEl.innerHTML = flash ? `<p class="flash ${flash.kind}" role="status">${escapeText(flash.msg)}</p>` : '';
     screen.mount?.(ctx, screenEl, current.params);
   }

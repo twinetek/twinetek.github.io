@@ -62,7 +62,7 @@ a { color: var(--accent); }
 
 /* ---- Top bar and status ---- */
 .topbar { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: var(--muted); }
-.brand { text-decoration: none; }
+.topbar nav button.link { padding: 0; font-size: 0.95rem; color: var(--accent); }
 .status {
   margin-top: 10px;
   background: var(--panel);
