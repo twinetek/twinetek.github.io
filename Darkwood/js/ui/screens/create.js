@@ -5,14 +5,18 @@ import { newGameState } from '../../engine/state.js';
 import { STATS, strBonus, dexAc, conHp } from '../../rules/tables.js';
 import { button, esc, signed } from '../format.js';
 
+// Always returns text, so every row has the same shape whatever was rolled.
 function bonusText(key, v) {
   if (key === 'str') {
     const b = strBonus(v);
-    return b.hit || b.dmg ? `${signed(b.hit)} to hit, ${signed(b.dmg)} damage` : '';
+    return b.hit || b.dmg ? `${signed(b.hit)} hit, ${signed(b.dmg)} damage` : 'No bonus';
   }
-  if (key === 'dex') return dexAc(v) ? `${signed(dexAc(v))} armor class` : '';
-  if (key === 'con') return conHp(v) ? `${signed(conHp(v))} hit points per level` : '';
-  return '';
+  if (key === 'dex') {
+    const ac = dexAc(v); // negative is better
+    return ac ? `Armor class ${Math.abs(ac)} ${ac < 0 ? 'better' : 'worse'}` : 'No bonus';
+  }
+  if (key === 'con') return conHp(v) ? `${signed(conHp(v))} hp per level` : 'No bonus';
+  return 'No effect';
 }
 
 export function render(ctx, params) {
@@ -24,9 +28,8 @@ export function render(ctx, params) {
   const preview = createCharacter('x', s);
   const rows = STATS.map(([key, label]) => `
     <tr>
-      <th scope="row">${label}</th>
       <td class="num stat">${s[key]}</td>
-      <td class="muted">${bonusText(key, s[key])}</td>
+      <th scope="row">${label}<span class="bonus">${bonusText(key, s[key])}</span></th>
     </tr>`).join('');
   return `
     <section class="panel narrow">
@@ -34,14 +37,18 @@ export function render(ctx, params) {
       <label class="field">Name
         <input id="hero-name" type="text" maxlength="24" autocomplete="off" value="${esc(params.name ?? 'Derek')}">
       </label>
-      <table class="stats">
+      <p class="muted small">Only Strength, Dexterity, and Constitution affect the game, and their bonuses start at 15.</p>
+      <table class="stats roll-table">
+        <colgroup><col class="c-value"><col></colgroup>
         <tbody>${rows}</tbody>
       </table>
-      <p class="muted small">Only Strength, Dexterity, and Constitution affect the game, and their bonuses start at 15.
-        With these stats you start with ${maxHp(preview)} hit points and armor class ${armorClass(preview)}.</p>
+      <dl class="facts roll-summary">
+        <div><dt>Starting hit points</dt><dd>${maxHp(preview)}</dd></div>
+        <div><dt>Armor class</dt><dd>${armorClass(preview)}</dd></div>
+      </dl>
       <div class="row">
         ${button('🎲 Reroll', 'reroll', {}, { title: 'Shortcut: R' })}
-        <span class="muted small">Rolls: ${params.rolls}</span>
+        <span class="muted small rolls">Rolls: ${params.rolls}</span>
       </div>
       <div class="row">
         ${button('Begin', 'begin', {}, { cls: 'primary' })}

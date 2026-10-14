@@ -39,7 +39,15 @@ frame.addEventListener('load', async () => {
     log(!navLink(), 'no town link on the title screen');
     await click('[data-action="go"][data-to="create"]');
     log(screen() === 'create', 'create screen shows');
-    await click('[data-action="reroll"]');
+    const layout = () => [...d.querySelectorAll('.roll-table td, .roll-summary dd, [data-action="reroll"], [data-action="begin"]')]
+      .map(el => { const r = el.getBoundingClientRect(); return `${r.left},${r.top},${r.width},${r.height}`; }).join('|');
+    const first = layout();
+    let steady = true;
+    for (let i = 0; i < 15; i++) {
+      await click('[data-action="reroll"]');
+      if (layout() !== first) steady = false;
+    }
+    log(steady, 'stat values and buttons stay put across 15 rerolls');
     q('#hero-name').value = 'Smoke';
     await click('[data-action="begin"]');
     log(screen() === 'town' && q('#status').textContent.includes('Smoke'), 'new game starts in town with status bar');
