@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Darkwood Smoke Test</title>
+<style>body { font: 14px/1.4 ui-monospace, Consolas, monospace; margin: 16px; } iframe { width: 1000px; height: 700px; border: 1px solid #ccc; }</style>
+</head>
+<body>
+<h1>Darkwood smoke test</h1>
+<p>Plays through the real UI in the frame below: create a character, shop, fight, rest, save, reload.
+  Note: this uses the same local storage as the game, so it overwrites your autosave and slot 3.</p>
+<pre id="out"></pre>
+<iframe id="game" src="../index.html"></iframe>
+<script>
+const out = document.getElementById('out');
+const frame = document.getElementById('game');
+const log = (ok, msg) => out.insertAdjacentText('beforeend', `${ok ? 'PASS' : 'FAIL'} ${msg}\n`);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const errors = [];
+
+frame.addEventListener('load', async () => {
+  const w = frame.contentWindow;
+  const d = frame.contentDocument;
+  w.addEventListener('error', e => errors.push(e.message));
+  w.addEventListener('unhandledrejection', e => errors.push(String(e.reason)));
+  w.confirm = () => true;
+  await wait(300);
+  const q = sel => d.querySelector(sel);
+  const click = async (sel, label) => {
+    const btns = [...d.querySelectorAll(sel)].filter(b => !label || b.textContent.includes(label));
+    if (!btns.length) throw new Error(`No button ${sel} ${label ?? ''}`);
+    btns[0].click();
+    await wait(50);
+  };
+  const screen = () => q('#screen').dataset.screen;
+  try {
+    log(screen() === 'title', 'title screen shows');
+    await click('[data-action="go"][data-to="create"]');
+    log(screen() === 'create', 'create screen shows');
+    await click('[data-action="reroll"]');
+    q('#hero-name').value = 'Smoke';
+    await click('[data-action="begin"]');
+    log(screen() === 'town' && q('#status').textContent.includes('Smoke'), 'new game starts in town with status bar');
+    await click('[data-to="weapons"]');
+    await click('[data-action="buy"][data-id="long-sword"]');
+    log(q('#flash').textContent.includes('Long Sword'), 'bought a long sword');
+    await click('[data-to="town"]');
+    await click('[data-to="armor"]');
+    await click('[data-action="buy"][data-id="leather"]');
+    log(q('#flash').textContent.includes('Leather'), 'bought leather armor');
+    await click('[data-to="town"]');
+    await click('[data-to="arena"]');
+    await click('tr[data-id="kobold"]');
+    log(q('.foe-card h3').textContent === 'Kobold', 'selected the kobold');
+    await click('[data-action="fight"][data-id="kobold"]');
+    log(screen() === 'combat', 'combat screen shows');
+    await click('[data-action="speed"][data-speed="instant"]');
+    const stopInCombat = new URLSearchParams(location.search).get('stop') === 'combat';
+    for (let i = 0; i < (stopInCombat ? 2 : 60) && q('[data-action="fight"]'); i++) {
+      await click('[data-action="fight"]');
+      await wait(30);
+    }
+    if (stopInCombat) {
+      log(true, 'stopped mid-fight for inspection (?stop=combat)');
+      document.body.dataset.done = 'yes';
+      return;
+    }
+    const result = frame.contentWindow.localStorage.getItem('darkwood.save.auto');
+    const state = JSON.parse(result).state;
+    log(state.combat?.over, `fight ended (${state.combat?.result}) after ${state.combat?.round} rounds`);
+    log(q('#combat-log').children.length > 2, 'combat log has lines');
+    if (state.combat.result !== 'death') {
+      await click('[data-action="leave"]');
+      log(screen() === 'town', 'returned to town');
+      await click('[data-to="inn"]');
+      await click('[data-action="full"]');
+      await click('[data-to="town"]');
+      await click('[data-to="saves"]');
+      await click('[data-action="save"][data-slot="3"]');
+      log(q('#flash').textContent.includes('Saved'), 'saved to slot 3');
+      await click('[data-action="load"][data-slot="3"]');
+      log(screen() === 'town', 'loaded slot 3');
+      await click('[data-to="character"]');
+      log(q('#screen').textContent.includes('Long Sword'), 'equipment screen lists the sword');
+    } else {
+      await click('[data-action="leave"]');
+      log(screen() === 'dead', 'death screen shows');
+    }
+  } catch (err) {
+    log(false, err.message);
+  }
+  log(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);
+  document.body.dataset.done = 'yes';
+});
+</script>
+</body>
+</html>

@@ -11,6 +11,7 @@ Live site: https://twinetek.github.io/
 | Tool | Folder | What it does |
 | --- | --- | --- |
 | Trip Split | `ExpenseSplitter/` | Splits shared trip expenses and works out the fewest payments to settle up. Data stays in your browser. |
+| Darkwood | `Darkwood/` | Gladiator arena RPG, a remake of the 1992 Mac shareware game. Saves in your browser. See `Darkwood/DESIGN.md`. |
 
 Each tool's full documentation is on the site, for example https://twinetek.github.io/#/trip-split.
 
@@ -20,8 +21,9 @@ Each tool's full documentation is on the site, for example https://twinetek.gith
 /
 ├── index.html            Docs site: tool index, docs pages, search
 ├── README.md             This file
-└── ExpenseSplitter/
-    └── index.html        Trip Split (HTML, CSS, and JavaScript in one file)
+├── ExpenseSplitter/
+│   └── index.html        Trip Split (HTML, CSS, and JavaScript in one file)
+└── Darkwood/             Darkwood game (ES modules, no build step; see DESIGN.md)
 ```
 
 ## Adding a tool
