@@ -12,6 +12,7 @@ Live site: https://twinetek.github.io/
 | --- | --- | --- |
 | Trip Split | `ExpenseSplitter/` | Splits shared trip expenses and works out the fewest payments to settle up. Data stays in your browser. |
 | Darkwood | `Darkwood/` | Gladiator arena RPG, a remake of the 1992 Mac shareware game. Saves in your browser. See `Darkwood/DESIGN.md`. |
+| The Battlerings of Dimholt | `BattleringsOfDimholt/` | A new game that builds on Darkwood with its own ideas, such as stat points from leveling. See `BattleringsOfDimholt/DESIGN.md`. |
 
 Each tool's full documentation is on the site, for example https://twinetek.github.io/#/trip-split.
 
@@ -23,7 +24,8 @@ Each tool's full documentation is on the site, for example https://twinetek.gith
 ├── README.md             This file
 ├── ExpenseSplitter/
 │   └── index.html        Trip Split (HTML, CSS, and JavaScript in one file)
-└── Darkwood/             Darkwood game (ES modules, no build step; see DESIGN.md)
+├── Darkwood/             Darkwood game (ES modules, no build step; see DESIGN.md)
+└── BattleringsOfDimholt/ The Battlerings of Dimholt (builds on Darkwood; see DESIGN.md)
 ```
 
 ## Adding a tool
